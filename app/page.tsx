@@ -1,30 +1,13 @@
 import Image from "next/image";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-white text-gray-900">
-
-      {/* Header */}
-      <header className="flex items-center justify-between px-8 py-5 border-b">
-        <div className="flex items-center">
-          <Image
-            src="/logo.jpg"
-            alt="Hagerstown Light Logo"
-            width={180}
-            height={80}
-          />
-        </div>
-
-        <nav className="hidden md:flex gap-8 text-sm font-medium">
-          <a href="#">Home</a>
-          <a href="#">Electric Services</a>
-          <a href="#">Outages</a>
-          <a href="#">Safety</a>
-          <a href="#">Contact</a>
-        </nav>
-      </header>
-
-
+      <header />
+      
       {/* Hero Section */}
       <section className="bg-blue-900 text-white px-8 py-24">
         <div className="max-w-5xl mx-auto">
@@ -102,13 +85,7 @@ export default function Home() {
 
       </section>
 
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white px-8 py-8 text-center">
-        <p>
-          Hagerstown Light | City of Hagerstown Electric Division
-        </p>
-      </footer>
+<Footer />
 
     </main>
   );
