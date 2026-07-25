@@ -15,13 +15,7 @@ export default function Hero() {
 
         <div className="flex gap-4">
 
-          <button className="bg-white text-blue-900 px-6 py-3 rounded-lg font-semibold">
-            Report an Outage
-          </button>
-
-          <button className="border border-white px-6 py-3 rounded-lg font-semibold">
-            View Services
-          </button>
+          
 
         </div>
 
