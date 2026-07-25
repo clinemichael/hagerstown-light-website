@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ServiceCard from "@/components/ServiceCard";
 import Hero from "@/components/Hero";
+import QuickLinks from "@/components/QuickLinks";
 
 export default function Home() {
   return (
@@ -12,6 +13,9 @@ export default function Home() {
 
       
       <Hero />
+
+
+      <QuickLinks />
 
 
       {/* Services */}
