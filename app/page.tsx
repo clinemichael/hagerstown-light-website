@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-
+import ServiceCard from "@/components/ServiceCard";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-white text-gray-900">
-      <header />
+
+      <Header />
+
       
       {/* Hero Section */}
       <section className="bg-blue-900 text-white px-8 py-24">
@@ -45,41 +47,25 @@ export default function Home() {
 
         <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
 
-          <div className="p-6 border rounded-xl">
-            <h3 className="font-bold text-xl mb-3">
-              Electric Service
-            </h3>
-            <p>
-              Information about power delivery, billing, and electric programs.
-            </p>
-          </div>
+          <ServiceCard
+  title="Electric Service"
+  description="Information about power delivery, billing, and electric programs."
+/>
 
-          <div className="p-6 border rounded-xl">
-            <h3 className="font-bold text-xl mb-3">
-              Outages
-            </h3>
-            <p>
-              Find outage information and learn what to do during interruptions.
-            </p>
-          </div>
+<ServiceCard
+  title="Outages"
+  description="Find outage information and learn what to do during interruptions."
+/>
 
-          <div className="p-6 border rounded-xl">
-            <h3 className="font-bold text-xl mb-3">
-              Safety
-            </h3>
-            <p>
-              Learn how to stay safe around electrical equipment.
-            </p>
-          </div>
+<ServiceCard
+  title="Safety"
+  description="Learn how to stay safe around electrical equipment."
+/>
 
-          <div className="p-6 border rounded-xl">
-            <h3 className="font-bold text-xl mb-3">
-              Contact Us
-            </h3>
-            <p>
-              Get assistance from the Hagerstown Light team.
-            </p>
-          </div>
+<ServiceCard
+  title="Contact Us"
+  description="Get assistance from the Hagerstown Light team."
+/>
 
         </div>
 
