@@ -32,16 +32,18 @@ export default function QuickLinks() {
         <h2 className="text-3xl font-bold text-center mb-10">
       Our Quick Links
         </h2>
-        <div className="grid md:grid-cols-5 gap-6 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-5 gap-6 max-w-auto mx-auto">
 
       {quickLinks.map((link) => (
   <div key={link.title}>
-    <div className="p-6 border rounded-xl shadow-sm hover:shadow-md transition">
+    <div className="p-3 border rounded-xl shadow-sm hover:shadow-md transition min-h-[140px]">
 
-    <div className="text-4xl mb-4">
+        <div className="flex items-start gap-4">
+
+    <div className="text-6xl">
         {link.icon}
     </div>
-
+    <div>
     <h3 className="text-xl font-bold mb-3">
         {link.title}
     </h3>
@@ -50,9 +52,10 @@ export default function QuickLinks() {
         {link.description}
     </p>
 
-</div>
     </div>
-    
+    </div>
+    </div>
+    </div>
 
 ))}
 
