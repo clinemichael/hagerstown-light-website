@@ -50,12 +50,12 @@ export default function QuickLinks() {
 
       {quickLinks.map((link) => (
   <div key={link.title}>
-    <div className="p-3 border rounded-xl shadow-sm hover:shadow-md transition min-h-[140px]">
+    <div className="p-4 border rounded-xl shadow-sm hover:shadow-lg hover:border-brand-blue transition min-h-[140px]">
 
         <div className="flex items-start gap-4">
 
     <div>
-        <link.icon className="text-blue-700" size={32} />
+        <link.icon className="text-brand-blue" size={32} />
     </div>
     <div>
     <h3 className="text-xl font-bold mb-3">
