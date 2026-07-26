@@ -1,28 +1,42 @@
-const quickLinks = [
+import {
+  Zap,
+  Lightbulb,
+  CreditCard,
+  House,
+  Phone,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+type QuickLink = {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+};
+
+const quickLinks: QuickLink[] = [
   {
     title: "Report Power Outage",
     description: "Report a power outage or check outage information.",
-    icon: "⚡",
+    icon: Zap,
   },
   {
     title: "Report Street Light Issue",
     description: "Report a street light that is out or damaged.",
-    icon: "💡",
+    icon: Lightbulb,
   },
   {
     title: "Pay My Bill",
     description: "Access billing information and payment options.",
-    icon: "💳",
+    icon: CreditCard,
   },
   {
     title: "Start / Stop Service",
     description: "Request new service or manage an existing account.",
-    icon: "🏠",
+    icon: House,
   },
   {
     title: "Contact Us",
     description: "Get assistance from Hagerstown Light.",
-    icon: "📞",
+    icon: Phone,
   },
 ];
 
@@ -32,7 +46,7 @@ export default function QuickLinks() {
         <h2 className="text-3xl font-bold text-center mb-10">
       Our Quick Links
         </h2>
-        <div className="grid md:grid-cols-5 gap-6  mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mx-auto"></div><div className="grid md:grid-cols-5 gap-6  mx-auto">
 
       {quickLinks.map((link) => (
   <div key={link.title}>
@@ -40,8 +54,8 @@ export default function QuickLinks() {
 
         <div className="flex items-start gap-4">
 
-    <div className="text-6xl">
-        {link.icon}
+    <div>
+        <link.icon className="text-blue-700" size={32} />
     </div>
     <div>
     <h3 className="text-xl font-bold mb-3">
