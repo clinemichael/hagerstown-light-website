@@ -20,11 +20,17 @@ export default function Header() {
 >
   Home
 </a>
+<a
+  href="#"
+  className="hover:text-brand-blue transition"
+>
+  About
+</a>
         <a
   href="#"
   className="hover:text-brand-blue transition"
 >
-  Electric Services
+  Services
 </a>
         <a
   href="#"
