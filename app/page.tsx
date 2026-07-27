@@ -5,6 +5,7 @@ import ServiceCard from "@/components/ServiceCard";
 import Hero from "@/components/Hero";
 import QuickLinks from "@/components/QuickLinks";
 import AlertBar from "@/components/AlertBar";
+import ServiceStatus from "@/components/ServiceStatus";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
       
       <Hero />
 
+      <ServiceStatus />
 
       <QuickLinks />
 
