@@ -1,10 +1,8 @@
-import {
-  Zap,
-  Lightbulb,
-  CreditCard,
-  House,
-  Phone,
-} from "lucide-react";
+import {Zap, Lightbulb, CreditCard, House, Phone,} from "lucide-react";
+import Section from "./Section";
+import SectionTitle from "./SectionTitle";
+import Card from "./Card";
+
 import type { LucideIcon } from "lucide-react";
 type QuickLink = {
   title: string;
@@ -42,19 +40,18 @@ const quickLinks: QuickLink[] = [
 
 export default function QuickLinks() {
   return (
-    <section className="px-8 py-16">
-        <h2 className="text-3xl font-bold text-center mb-10">
-      Our Quick Links
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mx-auto"></div><div className="grid md:grid-cols-5 gap-6  mx-auto">
+    <Section>
+      <SectionTitle
+        title="Our Quick Links"
+        description="Access important resources and services quickly."
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mx-auto">
 
       {quickLinks.map((link) => (
   <div key={link.title}>
-    <div className="p-4 border rounded-xl shadow-sm hover:shadow-lg hover:border-brand-blue transition min-h-[140px]">
-
-        <div className="flex items-start gap-4">
-
-    <div>
+    <Card>
+      <div className="flex items-start gap-4">
+        <div>
         <link.icon className="text-brand-blue" size={32} />
     </div>
     <div>
@@ -68,12 +65,13 @@ export default function QuickLinks() {
 
     </div>
     </div>
-    </div>
+    </Card>
+    
     </div>
 
 ))}
 
         </div>
-    </section>
+    </Section>
   );
 }
