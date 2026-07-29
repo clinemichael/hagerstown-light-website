@@ -13,9 +13,6 @@ export default function Home() {
 
       <AlertBar /> 
 
-
-      <Header />
-
       
       <Hero />
 
@@ -57,7 +54,6 @@ export default function Home() {
 
       </section>
 
-<Footer />
 
     </main>
   );

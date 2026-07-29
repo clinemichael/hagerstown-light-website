@@ -5,14 +5,14 @@ export default function Header() {
   return (
     <header className="flex items-center justify-between px-8 py-4 border-b bg-white shadow-sm">
 
-      <div className="flex items-center">
+      <Link href="/" className="flex items-center">
         <Image
           src="/logo.jpg"
           alt="Hagerstown Light Logo"
           width={220}
           height={100}
         />
-      </div>
+      </Link>
 
       <nav className="hidden md:flex gap-8 text-sm font-medium text-brand-dark">
         <Link href="/" className="hover:text-brand-blue transition">
