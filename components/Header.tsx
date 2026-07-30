@@ -19,7 +19,7 @@ export default function Header() {
           Home
         </Link>
 
-        <Link href="/About" className="hover:text-brand-blue transition">
+        <Link href="/about" className="hover:text-brand-blue transition">
           About
         </Link>
 
