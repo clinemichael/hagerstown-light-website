@@ -5,7 +5,7 @@ import SectionTitle from "./SectionTitle";
 
 export default function About() {
   return (
-    <Section>
+       <Section>
       <SectionTitle
         title="About Hagerstown Light"
         description="Providing safe and reliable electric service to our community since 1908."
