@@ -6,7 +6,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-brand-blue via-brand-blue/80 to-transparent"></div>
 
       {/* Hero Content */}
-      <div className="relative z-10 max-w-7xl min-h-[400px] mx-auto flex items-center -ml-4 md:-ml-4">
+      <div className="relative z-10 max-w-7xl min-h-[400px] mx-auto flex items-center -ml-2 md:-ml-4">
 
         <div className="max-w-2xl">
 
