@@ -5,8 +5,6 @@ import {
   Clock,
 } from "lucide-react";
 
-import Card from "@/components/common/Card";
-
 
 const operations = [
   {
@@ -32,54 +30,61 @@ const operations = [
 
 export default function TodaysOperations() {
   return (
-    <section className="mt-10">
+    <section>
 
-      <h2 className="text-2xl font-bold text-brand-blue mb-6">
+      <h2 className="text-xl font-bold text-brand-blue mb-4">
         Today's Operations
       </h2>
 
 
-      <div className="space-y-4">
+      <div className="bg-white rounded-lg border border-gray-200 divide-y">
 
         {operations.map((operation) => {
 
           const Icon = operation.icon;
 
           return (
-            <Card key={operation.title}>
+            <div
+              key={operation.title}
+              className="
+                flex
+                items-center
+                gap-4
+                p-4
+              "
+            >
 
-              <div className="flex items-start gap-4">
-
-                <div>
-                  <Icon
-                    size={32}
-                    className="text-brand-blue"
-                  />
-                </div>
-
-
-                <div className="flex-1">
-
-                  <h3 className="text-lg font-semibold">
-                    {operation.title}
-                  </h3>
-
-                  <p className="text-gray-600">
-                    {operation.description}
-                  </p>
-
-                </div>
+              <Icon
+                size={24}
+                className="text-brand-blue"
+              />
 
 
-                <div className="flex items-center gap-2 text-gray-500">
-                  <Clock size={18}/>
-                  {operation.time}
-                </div>
+              <div className="flex-1">
 
+                <h3 className="font-semibold">
+                  {operation.title}
+                </h3>
+
+                <p className="text-sm text-gray-600">
+                  {operation.description}
+                </p>
 
               </div>
 
-            </Card>
+
+              <div className="
+                flex
+                items-center
+                gap-2
+                text-sm
+                text-gray-500
+              ">
+                <Clock size={16}/>
+                {operation.time}
+              </div>
+
+            </div>
           );
 
         })}

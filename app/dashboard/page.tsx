@@ -14,9 +14,13 @@ export default function Dashboard() {
 
       <OperationsStatus />
 
-      <QuickActions />
+      <div className="grid lg:grid-cols-2 gap-6 mt-10">
 
-      <TodaysOperations />
+  <QuickActions />
+
+  <TodaysOperations />
+
+</div>
 
     </AppLayout>
   );

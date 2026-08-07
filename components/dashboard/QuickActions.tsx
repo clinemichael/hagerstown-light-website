@@ -7,38 +7,32 @@ import {
   BarChart3,
 } from "lucide-react";
 
-import ActionCard from "./ActionCard";
+import QuickActionCard from "./QuickActionCard";
 
 
 const actions = [
   {
     title: "Safety Forms",
-    description: "Daily inspections and safety reporting",
     icon: ClipboardCheck,
   },
   {
     title: "Work Orders",
-    description: "View and manage assigned work",
     icon: Zap,
   },
   {
-    title: "Operations Calendar",
-    description: "Crew schedules and planned work",
+    title: "Calendar",
     icon: Calendar,
   },
   {
     title: "Documents",
-    description: "Policies, procedures, and resources",
     icon: FileText,
   },
   {
-    title: "Crew Management",
-    description: "Assignments and availability",
+    title: "Crews",
     icon: Users,
   },
   {
     title: "Reports",
-    description: "Operational reporting and analytics",
     icon: BarChart3,
   },
 ];
@@ -46,20 +40,18 @@ const actions = [
 
 export default function QuickActions() {
   return (
-    <section className="mt-8">
+    <section>
 
-      <h2 className="text-2xl font-bold text-brand-blue mb-6">
+      <h2 className="text-xl font-bold text-brand-blue mb-4">
         Quick Actions
       </h2>
 
-
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 gap-3">
 
         {actions.map((action) => (
-          <ActionCard
+          <QuickActionCard
             key={action.title}
             title={action.title}
-            description={action.description}
             icon={action.icon}
           />
         ))}
