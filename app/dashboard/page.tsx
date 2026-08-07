@@ -1,6 +1,7 @@
 import AppLayout from "@/components/layout/AppLayout";
 import QuickActions from "@/components/dashboard/QuickActions";
 import OperationsStatus from "@/components/dashboard/OperationsStatus";
+import TodaysOperations from "@/components/dashboard/TodaysOperations";
 
 
 export default function Dashboard() {
@@ -14,6 +15,8 @@ export default function Dashboard() {
       <OperationsStatus />
 
       <QuickActions />
+
+      <TodaysOperations />
 
     </AppLayout>
   );
