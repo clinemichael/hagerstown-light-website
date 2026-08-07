@@ -1,37 +1,45 @@
+import LoginForm from "./auth/LoginForm";
+
+
 export default function Hero() {
   return (
-    <section className="relative bg-[url('/hero.jpg')] bg-cover bg-[center_40%] text-white px-4 md:px-8 py-12 overflow-hidden">
+ <div className="relative z-10 max-w-7xl min-h-screen mx-auto flex items-center px-8">
 
-      {/* Blue Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-brand-blue via-brand-blue/80 to-transparent"></div>
+  <div className="grid md:grid-cols-2 gap-12 items-center w-full">
 
-      {/* Hero Content */}
-      <div className="relative z-10 max-w-7xl min-h-[400px] mx-auto flex items-center -ml-2 md:-ml-4">
 
-        <div className="max-w-2xl">
+    <div>
 
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-            Powering Hagerstown.
-            <br />
-            Powering Our Community.
-          </h1>
+      <img
+        src="/logo.jpg"
+        alt="Hagerstown Light Department"
+        className="w-80 mb-10"
+      />
 
-          <div className="h-1 w-20 bg-brand-gold mb-6"></div>
 
-          <h2 className="text-2xl font-semibold text-brand-gold mb-6">
-            Safe. Reliable. Local.
-          </h2>
+      <h1 className="text-5xl font-bold text-white">
+        HLD Operations
+      </h1>
 
-          <p className="text-lg md:text-xl leading-relaxed">
-            Hagerstown Light provides dependable electric service,
-            responsive customer support, and a commitment to the
-            community we proudly serve.
-          </p>
 
-        </div>
+      <p className="mt-6 text-xl text-white max-w-lg">
+        Hagerstown Light Department
+        Internal Operations Portal
+      </p>
 
-      </div>
 
-    </section>
+    </div>
+
+
+    <div className="flex justify-center">
+
+      <LoginForm />
+
+    </div>
+
+
+  </div>
+
+</div>
   );
 }

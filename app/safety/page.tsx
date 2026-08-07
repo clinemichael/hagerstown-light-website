@@ -1,5 +1,5 @@
 import Section from "@/components/Section";
-import SectionTitle from "@/components/SectionTitle";
+import SectionTitle from "@/components/common/SectionTitle";
 
 export default function SafetyPage() {
   return (

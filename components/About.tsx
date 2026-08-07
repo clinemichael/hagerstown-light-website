@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Section from "./Section";
-import SectionTitle from "./SectionTitle";
+import SectionTitle from "./common/SectionTitle";
 
 
 export default function About() {
