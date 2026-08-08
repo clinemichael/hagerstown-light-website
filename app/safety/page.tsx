@@ -1,16 +1,18 @@
-import Section from "@/components/Section";
-import SectionTitle from "@/components/common/SectionTitle";
+import AppLayout from "@/components/layout/AppLayout";
+import SafetyForms from "@/components/safety/SafetyForms";
 
 export default function SafetyPage() {
   return (
-    <Section>
-      <SectionTitle
-        title="Safety"
-        description="Learn about electrical safety practices and guidelines."
-      />
+    <AppLayout>
+      <h1 className="text-3xl font-bold text-brand-blue">
+        Safety
+      </h1>
 
-      {/* Page content goes here */}
+      <p className="mt-2 text-gray-600">
+        Safety forms, reports, and resources.
+      </p>
 
-    </Section>
+      <SafetyForms />
+    </AppLayout>
   );
 }
