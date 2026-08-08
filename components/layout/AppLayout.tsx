@@ -17,8 +17,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <OperationsHeader />
 
         <main className="flex-1 p-8">
-          {children}
-        </main>
+
+  <div className="max-w-7xl mx-auto">
+    {children}
+  </div>
+
+</main>
 
       </div>
 

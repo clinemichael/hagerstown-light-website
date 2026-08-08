@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import AppLayout from "@/components/layout/AppLayout";
+
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CalendarGrid from "@/components/calendar/CalendarGrid";
 import CrewPanel from "@/components/calendar/CrewPanel";
@@ -113,8 +113,8 @@ export default function CalendarPage() {
   };
 
   return (
-    <AppLayout>
-
+    
+      <>
       <div>
 
         <div className="flex items-center justify-between mb-6">
@@ -177,6 +177,6 @@ export default function CalendarPage() {
         editingSchedule={editingSchedule}
       />
 
-    </AppLayout>
+    </>
   );
 }
