@@ -4,8 +4,6 @@ import Link from "next/link";
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
-import AppLayout from "@/components/layout/AppLayout";
-
 type OperationsLayoutProps = {
   children: ReactNode;
 };
@@ -25,7 +23,6 @@ export default function OperationsLayout({
     pathname === "/operations/fleet";
 
   return (
-    <AppLayout>
 
       <div>
 
@@ -119,6 +116,6 @@ export default function OperationsLayout({
 
       </div>
 
-    </AppLayout>
+    
   );
 }
