@@ -10,48 +10,42 @@ const vehicles = [
     type: "Bucket Truck",
     makeModel: "International 4300",
     status: "Available",
-    crew: "Line Crew 1",
-  },
+      },
   {
     id: "T-18",
     number: "Truck 18",
     type: "Bucket Truck",
     makeModel: "Freightliner M2",
     status: "Assigned",
-    crew: "Line Crew 1",
-  },
+      },
   {
     id: "T-21",
     number: "Truck 21",
     type: "Line Truck",
     makeModel: "International MV",
     status: "Available",
-    crew: "Line Crew 2",
-  },
+     },
   {
     id: "T-24",
     number: "Truck 24",
     type: "Bucket Truck",
     makeModel: "Freightliner 108SD",
     status: "Assigned",
-    crew: "Line Crew 2",
-  },
+      },
   {
     id: "T-26",
     number: "Truck 26",
     type: "Service Truck",
     makeModel: "Ford F-550",
     status: "Available",
-    crew: "Line Crew 2",
-  },
+     },
   {
     id: "ST-01",
     number: "Service Truck 1",
     type: "Service Truck",
     makeModel: "Ford F-250",
     status: "Available",
-    crew: "Service Crew",
-  },
+      },
 ];
 
 export default function FleetPage() {
@@ -64,7 +58,7 @@ export default function FleetPage() {
       vehicle.number.toLowerCase().includes(searchTerm) ||
       vehicle.type.toLowerCase().includes(searchTerm) ||
       vehicle.makeModel.toLowerCase().includes(searchTerm) ||
-      vehicle.crew.toLowerCase().includes(searchTerm)
+      vehicle.status.toLowerCase().includes(searchTerm)
     );
   });
 
@@ -157,10 +151,7 @@ export default function FleetPage() {
                   Status
                 </th>
 
-                <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Assigned Crew
-                </th>
-              </tr>
+                 </tr>
             </thead>
 
             <tbody className="divide-y divide-gray-100">
@@ -208,16 +199,13 @@ export default function FleetPage() {
                     </span>
                   </td>
 
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {vehicle.crew}
-                  </td>
                 </tr>
               ))}
 
               {filteredVehicles.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={4}
                     className="px-6 py-10 text-center text-gray-500"
                   >
                     No vehicles found.
