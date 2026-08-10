@@ -1,9 +1,17 @@
 "use client";
 
-import { Search, UserPlus } from "lucide-react";
+import { Search, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 
-const employees = [
+type Employee = {
+  id: string;
+  name: string;
+  title: string;
+  status: "Active" | "Inactive";
+  phone: string;
+};
+
+const initialEmployees: Employee[] = [
   {
     id: "1001",
     name: "John Smith",
@@ -49,7 +57,65 @@ const employees = [
 ];
 
 export default function EmployeesPage() {
+  const [employees, setEmployees] =
+    useState<Employee[]>(initialEmployees);
+
   const [search, setSearch] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [error, setError] = useState("");
+
+  const [employeeId, setEmployeeId] = useState("");
+  const [employeeName, setEmployeeName] = useState("");
+  const [employeeTitle, setEmployeeTitle] = useState("");
+  const [employeeStatus, setEmployeeStatus] =
+    useState<Employee["status"]>("Active");
+  const [employeePhone, setEmployeePhone] = useState("");
+
+  const resetForm = () => {
+    setEmployeeId("");
+    setEmployeeName("");
+    setEmployeeTitle("");
+    setEmployeeStatus("Active");
+    setEmployeePhone("");
+    setError("");
+  };
+
+  const closeForm = () => {
+    resetForm();
+    setShowAddForm(false);
+  };
+
+  const addEmployee = () => {
+    const trimmedId = employeeId.trim();
+
+    if (!trimmedId || !employeeName.trim() || !employeeTitle.trim()) {
+      setError("Please complete all required fields.");
+      return;
+    }
+
+    const duplicateId = employees.some(
+      (employee) =>
+        employee.id.toLowerCase() === trimmedId.toLowerCase()
+    );
+
+    if (duplicateId) {
+      setError(
+        `Employee ID ${trimmedId} is already in use. Please enter a different Employee ID.`
+      );
+      return;
+    }
+
+    const newEmployee: Employee = {
+      id: trimmedId,
+      name: employeeName.trim(),
+      title: employeeTitle.trim(),
+      status: employeeStatus,
+      phone: employeePhone.trim(),
+    };
+
+    setEmployees([...employees, newEmployee]);
+    closeForm();
+  };
 
   const filteredEmployees = employees.filter((employee) => {
     const searchTerm = search.toLowerCase();
@@ -62,9 +128,9 @@ export default function EmployeesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div>
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+      <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-brand-blue">
             Employees
@@ -77,6 +143,10 @@ export default function EmployeesPage() {
 
         <button
           type="button"
+          onClick={() => {
+            resetForm();
+            setShowAddForm(true);
+          }}
           className="
             inline-flex
             items-center
@@ -217,6 +287,235 @@ export default function EmployeesPage() {
           </table>
         </div>
       </div>
+
+      {/* Add Employee Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-xl bg-white rounded-xl shadow-xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div>
+                <h3 className="text-xl font-bold text-brand-blue">
+                  Add Employee
+                </h3>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  Add an employee to the operations portal.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeForm}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <div className="p-6 space-y-5">
+              {/* Error */}
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              {/* Employee ID */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Employee ID
+                </label>
+
+                <input
+                  type="text"
+                  value={employeeId}
+                  onChange={(event) => {
+                    setEmployeeId(event.target.value);
+                    setError("");
+                  }}
+                  placeholder="Example: 1007"
+                  className="
+                    w-full
+                    border
+                    border-gray-200
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-100
+                    focus:border-brand-blue
+                  "
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Name
+                </label>
+
+                <input
+                  type="text"
+                  value={employeeName}
+                  onChange={(event) =>
+                    setEmployeeName(event.target.value)
+                  }
+                  placeholder="Example: John Smith"
+                  className="
+                    w-full
+                    border
+                    border-gray-200
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-100
+                    focus:border-brand-blue
+                  "
+                />
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Title
+                </label>
+
+                <input
+                  type="text"
+                  value={employeeTitle}
+                  onChange={(event) =>
+                    setEmployeeTitle(event.target.value)
+                  }
+                  placeholder="Example: Lineman"
+                  className="
+                    w-full
+                    border
+                    border-gray-200
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-100
+                    focus:border-brand-blue
+                  "
+                />
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Status
+                </label>
+
+                <select
+                  value={employeeStatus}
+                  onChange={(event) =>
+                    setEmployeeStatus(
+                      event.target.value as Employee["status"]
+                    )
+                  }
+                  className="
+                    w-full
+                    border
+                    border-gray-200
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    bg-white
+                  "
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Phone Number
+                </label>
+
+                <input
+                  type="tel"
+                  value={employeePhone}
+                  onChange={(event) =>
+                    setEmployeePhone(event.target.value)
+                  }
+                  placeholder="Example: 301-555-0107"
+                  className="
+                    w-full
+                    border
+                    border-gray-200
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-100
+                    focus:border-brand-blue
+                  "
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={closeForm}
+                className="
+                  px-4
+                  py-2
+                  border
+                  border-gray-200
+                  rounded-lg
+                  text-sm
+                  font-semibold
+                  text-gray-600
+                  hover:bg-gray-50
+                "
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={addEmployee}
+                disabled={
+                  !employeeId.trim() ||
+                  !employeeName.trim() ||
+                  !employeeTitle.trim()
+                }
+                className="
+                  px-4
+                  py-2
+                  bg-brand-blue
+                  text-white
+                  rounded-lg
+                  text-sm
+                  font-semibold
+                  hover:opacity-90
+                  disabled:opacity-40
+                  disabled:cursor-not-allowed
+                "
+              >
+                Add Employee
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
