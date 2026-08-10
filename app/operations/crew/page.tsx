@@ -8,7 +8,13 @@ import {
   Users,
   X,
 } from "lucide-react";
+
 import { useState } from "react";
+import {
+  crews as initialCrews,
+  type Crew,
+  type CrewStatus,
+} from "@/data/crews";
 
 const employees = [
   {
@@ -71,53 +77,24 @@ const vehicles = [
   },
 ];
 
-const initialCrews = [
-  {
-    name: "Line Crew 1",
-    leadId: "1001",
-    memberIds: ["1002", "1003"],
-    vehicleIds: ["T-12", "T-18"],
-    status: "Available",
-    assignment: "No current assignment",
-  },
-  {
-    name: "Line Crew 2",
-    leadId: "1004",
-    memberIds: ["1005"],
-    vehicleIds: ["T-21", "T-24", "T-26"],
-    status: "Available",
-    assignment: "No current assignment",
-  },
-  {
-    name: "Service Crew",
-    leadId: "1005",
-    memberIds: ["1003"],
-    vehicleIds: ["ST-01"],
-    status: "Available",
-    assignment: "No current assignment",
-  },
-];
-
-type Crew = (typeof initialCrews)[number];
-
 export default function CrewPage() {
   const [crews, setCrews] = useState<Crew[]>(initialCrews);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const [editingCrewIndex, setEditingCrewIndex] = useState<
-    number | null
-  >(null);
+  const [editingCrewIndex, setEditingCrewIndex] = useState<number | null>(
+    null
+  );
 
-  const [crewToDeleteIndex, setCrewToDeleteIndex] = useState<
-    number | null
-  >(null);
+  const [crewToDeleteIndex, setCrewToDeleteIndex] = useState<number | null>(
+    null
+  );
 
   const [crewName, setCrewName] = useState("");
   const [leadId, setLeadId] = useState("");
   const [memberIds, setMemberIds] = useState<string[]>([]);
   const [vehicleIds, setVehicleIds] = useState<string[]>([]);
-  const [status, setStatus] = useState("Available");
+  const [status, setStatus] = useState<CrewStatus>("Available");
 
   const getEmployee = (id: string) =>
     employees.find((employee) => employee.id === id);
@@ -210,6 +187,7 @@ export default function CrewPage() {
       );
     } else {
       const newCrew: Crew = {
+        id: crypto.randomUUID(),
         name: crewName.trim(),
         leadId,
         memberIds: memberIds.filter(Boolean),
@@ -230,9 +208,7 @@ export default function CrewPage() {
     }
 
     setCrews(
-      crews.filter(
-        (_, index) => index !== crewToDeleteIndex
-      )
+      crews.filter((_, index) => index !== crewToDeleteIndex)
     );
 
     setCrewToDeleteIndex(null);
@@ -241,11 +217,11 @@ export default function CrewPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-brand-blue">
+          <h1 className="text-2xl font-bold text-brand-blue">
             Crews
-          </h2>
+          </h1>
 
           <p className="text-gray-600 mt-1">
             Manage crew assignments, personnel, and vehicles.
@@ -286,7 +262,7 @@ export default function CrewPage() {
 
           return (
             <div
-              key={`${crew.name}-${index}`}
+              key={`${crew.id}-${index}`}
               className="
                 bg-white
                 border
@@ -313,18 +289,23 @@ export default function CrewPage() {
                 </div>
 
                 <span
-                  className="
-                    text-xs
-                    font-semibold
-                    px-3
-                    py-1
-                    rounded-full
-                    bg-green-100
-                    text-green-700
-                  "
-                >
-                  {crew.status}
-                </span>
+  className={`
+    text-xs
+    font-semibold
+    px-3
+    py-1
+    rounded-full
+    ${
+      crew.status === "Available"
+        ? "bg-green-100 text-green-700"
+        : crew.status === "Assigned"
+        ? "bg-blue-100 text-blue-700"
+        : "bg-red-100 text-red-700"
+    }
+  `}
+>
+  {crew.status}
+</span>
               </div>
 
               {/* Lead */}
@@ -813,7 +794,9 @@ export default function CrewPage() {
                 <select
                   value={status}
                   onChange={(event) =>
-                    setStatus(event.target.value)
+                    setStatus(
+                      event.target.value as CrewStatus
+                    )
                   }
                   className="
                     w-full

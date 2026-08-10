@@ -1,8 +1,11 @@
 "use client";
 
 import {
-  Users,
+  CircleAlert,
+  CircleCheck,
+  Clock,
   UserCheck,
+  Users,
 } from "lucide-react";
 
 import { crews } from "@/data/crews";
@@ -10,6 +13,71 @@ import { crews } from "@/data/crews";
 type CrewPanelProps = {
   onCrewSelect: (crew: string) => void;
   onDaySelect: (day: string) => void;
+};
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case "Available":
+      return (
+        <CircleCheck
+          size={18}
+          className="text-green-600"
+        />
+      );
+
+    case "Assigned":
+      return (
+        <Clock
+          size={18}
+          className="text-blue-600"
+        />
+      );
+
+    case "Unavailable":
+    case "On Leave":
+      return (
+        <CircleAlert
+          size={18}
+          className="text-red-600"
+        />
+      );
+
+    case "Training":
+      return (
+        <CircleAlert
+          size={18}
+          className="text-yellow-600"
+        />
+      );
+
+    default:
+      return (
+        <UserCheck
+          size={18}
+          className="text-gray-400"
+        />
+      );
+  }
+};
+
+const getStatusClass = (status: string) => {
+  switch (status) {
+    case "Available":
+      return "text-green-600";
+
+    case "Assigned":
+      return "text-blue-600";
+
+    case "Unavailable":
+    case "On Leave":
+      return "text-red-600";
+
+    case "Training":
+      return "text-yellow-600";
+
+    default:
+      return "text-gray-500";
+  }
 };
 
 export default function CrewPanel({
@@ -44,7 +112,7 @@ export default function CrewPanel({
         {crews.map((crew) => (
           <div
             key={crew.id}
-            draggable
+            draggable={crew.status === "Available"}
             onDragStart={(event) =>
               handleDragStart(
                 event,
@@ -54,37 +122,36 @@ export default function CrewPanel({
             onClick={() =>
               onCrewSelect(crew.id)
             }
-            className="
+            className={`
               border
               border-gray-200
               rounded-lg
               p-3
-              hover:bg-gray-50
-              cursor-grab
-              active:cursor-grabbing
               transition
-            "
+              ${
+                crew.status === "Available"
+                  ? "hover:bg-gray-50 cursor-grab active:cursor-grabbing"
+                  : "bg-gray-50 opacity-75 cursor-not-allowed"
+              }
+            `}
           >
             <div className="flex items-center justify-between">
               <p className="font-semibold">
                 {crew.name}
               </p>
 
-              <UserCheck
-                size={18}
-                className={
-                  crew.status === "Available"
-                    ? "text-green-600"
-                    : "text-gray-400"
-                }
-              />
+              {getStatusIcon(crew.status)}
             </div>
 
             <p className="text-sm text-gray-500 mt-1">
-              {crew.members} members
-            </p>
+  {crew.memberIds.length + 1} members
+</p>
 
-            <p className="text-xs text-gray-500 mt-1">
+            <p
+              className={`text-xs font-medium mt-1 ${getStatusClass(
+                crew.status
+              )}`}
+            >
               {crew.status}
             </p>
           </div>
