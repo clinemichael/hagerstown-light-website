@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CalendarGrid from "@/components/calendar/CalendarGrid";
 import CrewPanel from "@/components/calendar/CrewPanel";
@@ -12,7 +11,7 @@ type Schedule = {
   id: string;
   workOrder: string;
   address: string;
-  crew: string;
+  crewId: string;
   day: string;
   startTime: string;
   endTime: string;
@@ -22,7 +21,7 @@ type ScheduleInput = {
   id?: string;
   workOrder: string;
   address: string;
-  crew: string;
+  crewId: string;
   day: string;
   startTime: string;
   endTime: string;
@@ -44,9 +43,7 @@ export default function CalendarPage() {
     schedule: ScheduleInput
   ) => {
     setSchedules((current) => {
-
       if (schedule.id) {
-
         return current.map((item) =>
           item.id === schedule.id
             ? {
@@ -55,7 +52,6 @@ export default function CalendarPage() {
               }
             : item
         );
-
       }
 
       return [
@@ -65,7 +61,6 @@ export default function CalendarPage() {
           id: crypto.randomUUID(),
         },
       ];
-
     });
   };
 
@@ -77,48 +72,39 @@ export default function CalendarPage() {
   };
 
   const handleCrewDrop = (
-    crew: string,
+    crewId: string,
     day: string
   ) => {
-
     setEditingSchedule(null);
-    setSelectedCrew(crew);
+    setSelectedCrew(crewId);
     setSelectedDay(day);
     setIsScheduleModalOpen(true);
-
   };
 
   const handleEditSchedule = (
     schedule: Schedule
   ) => {
-
     setEditingSchedule(schedule);
-    setSelectedCrew(schedule.crew);
+    setSelectedCrew(schedule.crewId);
     setSelectedDay(schedule.day);
     setIsScheduleModalOpen(true);
-
   };
 
   const handleDeleteSchedule = (
     scheduleId: string
   ) => {
-
     setSchedules((current) =>
       current.filter(
         (schedule) =>
           schedule.id !== scheduleId
       )
     );
-
   };
 
   return (
-    
-      <>
+    <>
       <div>
-
         <div className="flex items-center justify-between mb-6">
-
           <p className="text-gray-600">
             Schedule work, assign crews, and manage daily operations.
           </p>
@@ -139,20 +125,15 @@ export default function CalendarPage() {
           >
             + Create Schedule
           </button>
-
         </div>
-
 
         <CalendarHeader />
 
-
         <div className="grid xl:grid-cols-[240px_1fr] gap-6 mt-6">
-
           <CrewPanel
             onCrewSelect={setSelectedCrew}
             onDaySelect={setSelectedDay}
           />
-
 
           <CalendarGrid
             schedules={schedules}
@@ -160,11 +141,8 @@ export default function CalendarPage() {
             onEditSchedule={handleEditSchedule}
             onDeleteSchedule={handleDeleteSchedule}
           />
-
         </div>
-
       </div>
-
 
       <ScheduleModal
         isOpen={isScheduleModalOpen}
@@ -176,7 +154,6 @@ export default function CalendarPage() {
         selectedDay={selectedDay}
         editingSchedule={editingSchedule}
       />
-
     </>
   );
 }

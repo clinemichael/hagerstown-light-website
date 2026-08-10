@@ -5,50 +5,30 @@ import {
   UserCheck,
 } from "lucide-react";
 
+import { crews } from "@/data/crews";
+
 type CrewPanelProps = {
   onCrewSelect: (crew: string) => void;
   onDaySelect: (day: string) => void;
 };
 
-const crews = [
-  {
-    name: "Line Crew 1",
-    members: 4,
-    status: "Available",
-  },
-  {
-    name: "Line Crew 2",
-    members: 4,
-    status: "Available",
-  },
-  {
-    name: "Service Crew 1",
-    members: 3,
-    status: "Assigned",
-  },
-  {
-    name: "Meter Crew",
-    members: 2,
-    status: "Available",
-  },
-];
-
 export default function CrewPanel({
   onCrewSelect,
 }: CrewPanelProps) {
-
   const handleDragStart = (
-    event: React.DragEvent<HTMLDivElement>,
-    crewName: string
+    event: React.DragEvent,
+    crewId: string
   ) => {
-    event.dataTransfer.setData("crew", crewName);
+    event.dataTransfer.setData(
+      "crewId",
+      crewId
+    );
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-
+    <div>
+      {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-
         <Users
           size={22}
           className="text-brand-blue"
@@ -57,21 +37,22 @@ export default function CrewPanel({
         <h2 className="font-bold text-brand-blue">
           Crews
         </h2>
-
       </div>
 
+      {/* Crew List */}
       <div className="space-y-3">
-
         {crews.map((crew) => (
-
           <div
-            key={crew.name}
+            key={crew.id}
             draggable
             onDragStart={(event) =>
-              handleDragStart(event, crew.name)
+              handleDragStart(
+                event,
+                crew.id
+              )
             }
             onClick={() =>
-              onCrewSelect(crew.name)
+              onCrewSelect(crew.id)
             }
             className="
               border
@@ -81,11 +62,10 @@ export default function CrewPanel({
               hover:bg-gray-50
               cursor-grab
               active:cursor-grabbing
+              transition
             "
           >
-
             <div className="flex items-center justify-between">
-
               <p className="font-semibold">
                 {crew.name}
               </p>
@@ -98,7 +78,6 @@ export default function CrewPanel({
                     : "text-gray-400"
                 }
               />
-
             </div>
 
             <p className="text-sm text-gray-500 mt-1">
@@ -108,13 +87,9 @@ export default function CrewPanel({
             <p className="text-xs text-gray-500 mt-1">
               {crew.status}
             </p>
-
           </div>
-
         ))}
-
       </div>
-
     </div>
   );
 }

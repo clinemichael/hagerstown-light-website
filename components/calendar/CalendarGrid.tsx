@@ -1,10 +1,14 @@
 "use client";
 
+import type { DragEvent } from "react";
+
+import { crews } from "@/data/crews";
+
 type Schedule = {
-    id: string;
+  id: string;
   workOrder: string;
   address: string;
-  crew: string;
+  crewId: string;
   day: string;
   startTime: string;
   endTime: string;
@@ -12,7 +16,7 @@ type Schedule = {
 
 type CalendarGridProps = {
   schedules: Schedule[];
-  onCrewDrop: (crew: string, day: string) => void;
+  onCrewDrop: (crewId: string, day: string) => void;
   onEditSchedule: (schedule: Schedule) => void;
   onDeleteSchedule: (scheduleId: string) => void;
 };
@@ -27,15 +31,7 @@ const days = [
   "Sunday",
 ];
 
-const dates = [
-  10,
-  11,
-  12,
-  13,
-  14,
-  15,
-  16,
-];
+const dates = [10, 11, 12, 13, 14, 15, 16];
 
 export default function CalendarGrid({
   schedules,
@@ -43,28 +39,32 @@ export default function CalendarGrid({
   onEditSchedule,
   onDeleteSchedule,
 }: CalendarGridProps) {
-
   const handleDrop = (
-    event: React.DragEvent<HTMLDivElement>,
+    event: DragEvent,
     day: string
   ) => {
-
     event.preventDefault();
 
-    const crew = event.dataTransfer.getData("crew");
+    const crewId = event.dataTransfer.getData("crewId");
 
-    if (!crew) return;
+    if (!crewId) return;
 
-    onCrewDrop(crew, day);
+    onCrewDrop(crewId, day);
+  };
+
+  const getCrewName = (crewId: string) => {
+    const crew = crews.find(
+      (crew) => crew.id === crewId
+    );
+
+    return crew?.name || "Unknown Crew";
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-
-      <div className="grid grid-cols-7">
-
+    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+      {/* Calendar Header */}
+      <div className="grid grid-cols-7 bg-gray-50">
         {days.map((day, index) => (
-
           <div
             key={day}
             className="
@@ -73,9 +73,9 @@ export default function CalendarGrid({
               border-gray-200
               p-3
               text-center
+              last:border-r-0
             "
           >
-
             <p className="text-sm font-semibold text-gray-600">
               {day}
             </p>
@@ -83,112 +83,120 @@ export default function CalendarGrid({
             <p className="text-xl font-bold text-brand-blue mt-1">
               {dates[index]}
             </p>
-
           </div>
-
         ))}
-
       </div>
 
+      {/* Calendar Days */}
       <div className="grid grid-cols-7 min-h-[500px]">
+        {days.map((day) => {
+          const daySchedules = schedules
+           .filter((schedule) => schedule.day === day)
+           .sort((a, b) =>
+            a.startTime.localeCompare(b.startTime)
+           );
 
-        {days.map((day) => (
-
-          <div
-            key={day}
-            onDragOver={(event) =>
-              event.preventDefault()
-            }
-            onDrop={(event) =>
-              handleDrop(event, day)
-            }
-            className="
-              border-r
-              border-gray-200
-              p-2
-              transition
-              hover:bg-blue-50
-            "
-          >
-
-            <div className="space-y-2">
-
-              {schedules
-                .filter((schedule) => schedule.day === day)
-                .map((schedule, index) => (
-
+          return (
+            <div
+              key={day}
+              onDragOver={(event) =>
+                event.preventDefault()
+              }
+              onDrop={(event) =>
+                handleDrop(event, day)
+              }
+              className="
+                min-h-[500px]
+                border-r
+                border-gray-200
+                p-2
+                transition
+                hover:bg-blue-50
+                last:border-r-0
+              "
+            >
+              <div className="space-y-2">
+                {daySchedules.map((schedule) => (
                   <div
-                    key={`${schedule.workOrder}-${index}`}
+                    key={schedule.id}
                     className="
                       bg-green-50
                       border-l-4
                       border-green-500
                       rounded
-                      p-2
+                      p-3
+                      shadow-sm
                     "
                   >
-
+                    {/* Time */}
                     <p className="text-xs font-bold text-green-700">
-                      {schedule.startTime} - {schedule.endTime}
+                      {schedule.startTime} -{" "}
+                      {schedule.endTime}
                     </p>
 
-                    <p className="text-sm font-semibold">
+                    {/* Work Order */}
+                    <p className="text-sm font-semibold text-gray-900 mt-1">
                       {schedule.workOrder}
                     </p>
 
-                    <p className="text-xs text-gray-600">
-                      {schedule.crew}
+                    {/* Crew */}
+                    <p className="text-xs font-medium text-gray-700 mt-1">
+                      {getCrewName(schedule.crewId)}
                     </p>
 
-                    <p className="text-xs text-gray-500">
+                    {/* Address */}
+                    <p className="text-xs text-gray-500 mt-1">
                       {schedule.address}
                     </p>
-                    <div className="flex gap-2 mt-2">
 
-  <button
-    type="button"
-    onClick={() =>
-      onEditSchedule(schedule)
-    }
-    className="
-      text-xs
-      font-semibold
-      text-brand-blue
-      hover:underline
-    "
-  >
-    Edit
-  </button>
+                    {/* Actions */}
+                    <div className="flex gap-3 mt-3">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onEditSchedule(schedule)
+                        }
+                        className="
+                          text-xs
+                          font-semibold
+                          text-brand-blue
+                          hover:underline
+                        "
+                      >
+                        Edit
+                      </button>
 
-  <button
-    type="button"
-    onClick={() =>
-      onDeleteSchedule(schedule.id)
-    }
-    className="
-      text-xs
-      font-semibold
-      text-red-600
-      hover:underline
-    "
-  >
-    Delete
-  </button>
-
-</div>
-
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onDeleteSchedule(schedule.id)
+                        }
+                        className="
+                          text-xs
+                          font-semibold
+                          text-red-600
+                          hover:underline
+                        "
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-
                 ))}
 
+                {/* Empty Day */}
+                {daySchedules.length === 0 && (
+                  <div className="h-full min-h-[120px] flex items-center justify-center">
+                    <p className="text-xs text-gray-400">
+                      Drop crew here
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-
-          </div>
-
-        ))}
-
+          );
+        })}
       </div>
-
     </div>
   );
 }

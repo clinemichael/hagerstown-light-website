@@ -3,11 +3,13 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { crews } from "@/data/crews";
+
 type Schedule = {
   id?: string;
   workOrder: string;
   address: string;
-  crew: string;
+  crewId: string;
   day: string;
   startTime: string;
   endTime: string;
@@ -21,13 +23,6 @@ type ScheduleModalProps = {
   selectedDay: string;
   editingSchedule?: Schedule | null;
 };
-
-const crews = [
-  "Line Crew 1",
-  "Line Crew 2",
-  "Service Crew 1",
-  "Meter Crew",
-];
 
 const days = [
   "Monday",
@@ -47,42 +42,34 @@ export default function ScheduleModal({
   selectedDay,
   editingSchedule,
 }: ScheduleModalProps) {
-
   const [workOrder, setWorkOrder] = useState("");
   const [address, setAddress] = useState("");
-  const [crew, setCrew] = useState("");
+  const [crewId, setCrewId] = useState("");
   const [day, setDay] = useState("Monday");
   const [startTime, setStartTime] = useState("07:00");
   const [endTime, setEndTime] = useState("15:00");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-
     if (editingSchedule) {
-
       setWorkOrder(editingSchedule.workOrder);
       setAddress(editingSchedule.address);
-      setCrew(editingSchedule.crew);
+      setCrewId(editingSchedule.crewId);
       setDay(editingSchedule.day);
       setStartTime(editingSchedule.startTime);
       setEndTime(editingSchedule.endTime);
+      setError("");
 
       return;
     }
 
     setWorkOrder("");
     setAddress("");
-
-    setCrew(
-      selectedCrew || ""
-    );
-
-    setDay(
-      selectedDay || "Monday"
-    );
-
+    setCrewId(selectedCrew || "");
+    setDay(selectedDay || "Monday");
     setStartTime("07:00");
     setEndTime("15:00");
-
+    setError("");
   }, [
     editingSchedule,
     selectedCrew,
@@ -90,27 +77,47 @@ export default function ScheduleModal({
     isOpen,
   ]);
 
-
   if (!isOpen) {
     return null;
   }
 
-
   const handleSubmit = (
     event: React.FormEvent<HTMLFormElement>
   ) => {
-
     event.preventDefault();
 
-    if (!workOrder || !address || !crew) {
+    if (!workOrder.trim()) {
+      setError("Please enter a work order number.");
+      return;
+    }
+
+    if (!address.trim()) {
+      setError("Please enter the work location.");
+      return;
+    }
+
+    if (!crewId) {
+      setError("Please select a crew.");
+      return;
+    }
+
+    if (!day) {
+      setError("Please select a day.");
+      return;
+    }
+
+    if (startTime >= endTime) {
+      setError(
+        "End time must be later than the start time."
+      );
       return;
     }
 
     onCreate({
       id: editingSchedule?.id,
-      workOrder,
-      address,
-      crew,
+      workOrder: workOrder.trim(),
+      address: address.trim(),
+      crewId,
       day,
       startTime,
       endTime,
@@ -119,9 +126,7 @@ export default function ScheduleModal({
     onClose();
   };
 
-
   const isEditing = Boolean(editingSchedule);
-
 
   return (
     <div
@@ -136,14 +141,11 @@ export default function ScheduleModal({
         p-4
       "
       onMouseDown={(event) => {
-
         if (event.target === event.currentTarget) {
           onClose();
         }
-
       }}
     >
-
       <div
         className="
           w-full
@@ -154,11 +156,9 @@ export default function ScheduleModal({
           p-6
         "
       >
-
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
-
           <div>
-
             <h2 className="text-xl font-bold text-brand-blue">
               {isEditing
                 ? "Edit Schedule"
@@ -170,9 +170,7 @@ export default function ScheduleModal({
                 ? "Update this scheduled assignment."
                 : "Add work to the operations calendar."}
             </p>
-
           </div>
-
 
           <button
             type="button"
@@ -181,21 +179,21 @@ export default function ScheduleModal({
               p-2
               rounded-lg
               hover:bg-gray-100
+              transition
             "
+            aria-label="Close"
           >
             <X size={20} />
           </button>
-
         </div>
 
-
+        {/* Form */}
         <form
           onSubmit={handleSubmit}
           className="space-y-4"
         >
-
+          {/* Work Order */}
           <div>
-
             <label className="block text-sm font-medium mb-1">
               Work Order #
             </label>
@@ -203,9 +201,10 @@ export default function ScheduleModal({
             <input
               type="text"
               value={workOrder}
-              onChange={(event) =>
-                setWorkOrder(event.target.value)
-              }
+              onChange={(event) => {
+                setWorkOrder(event.target.value);
+                setError("");
+              }}
               placeholder="WO-1024"
               className="
                 w-full
@@ -214,14 +213,15 @@ export default function ScheduleModal({
                 rounded-lg
                 px-3
                 py-2
+                focus:outline-none
+                focus:ring-2
+                focus:ring-brand-blue/30
               "
             />
-
           </div>
 
-
+          {/* Address */}
           <div>
-
             <label className="block text-sm font-medium mb-1">
               Address
             </label>
@@ -229,9 +229,10 @@ export default function ScheduleModal({
             <input
               type="text"
               value={address}
-              onChange={(event) =>
-                setAddress(event.target.value)
-              }
+              onChange={(event) => {
+                setAddress(event.target.value);
+                setError("");
+              }}
               placeholder="123 Main Street"
               className="
                 w-full
@@ -240,23 +241,25 @@ export default function ScheduleModal({
                 rounded-lg
                 px-3
                 py-2
+                focus:outline-none
+                focus:ring-2
+                focus:ring-brand-blue/30
               "
             />
-
           </div>
 
-
+          {/* Crew */}
           <div>
-
             <label className="block text-sm font-medium mb-1">
               Crew
             </label>
 
             <select
-              value={crew}
-              onChange={(event) =>
-                setCrew(event.target.value)
-              }
+              value={crewId}
+              onChange={(event) => {
+                setCrewId(event.target.value);
+                setError("");
+              }}
               className="
                 w-full
                 border
@@ -265,40 +268,38 @@ export default function ScheduleModal({
                 px-3
                 py-2
                 bg-white
+                focus:outline-none
+                focus:ring-2
+                focus:ring-brand-blue/30
               "
             >
-
               <option value="">
                 Select a crew
               </option>
 
-              {crews.map((crewName) => (
-
+              {crews.map((crew) => (
                 <option
-                  key={crewName}
-                  value={crewName}
+                  key={crew.id}
+                  value={crew.id}
                 >
-                  {crewName}
+                  {crew.name}
                 </option>
-
               ))}
-
             </select>
-
           </div>
 
-
+          {/* Day */}
           <div>
-
             <label className="block text-sm font-medium mb-1">
               Day
             </label>
 
             <select
               value={day}
-              onChange={(event) =>
-                setDay(event.target.value)
-              }
+              onChange={(event) => {
+                setDay(event.target.value);
+                setError("");
+              }}
               className="
                 w-full
                 border
@@ -307,29 +308,25 @@ export default function ScheduleModal({
                 px-3
                 py-2
                 bg-white
+                focus:outline-none
+                focus:ring-2
+                focus:ring-brand-blue/30
               "
             >
-
               {days.map((dayName) => (
-
                 <option
                   key={dayName}
                   value={dayName}
                 >
                   {dayName}
                 </option>
-
               ))}
-
             </select>
-
           </div>
 
-
+          {/* Time */}
           <div className="grid grid-cols-2 gap-3">
-
             <div>
-
               <label className="block text-sm font-medium mb-1">
                 Start Time
               </label>
@@ -337,9 +334,10 @@ export default function ScheduleModal({
               <input
                 type="time"
                 value={startTime}
-                onChange={(event) =>
-                  setStartTime(event.target.value)
-                }
+                onChange={(event) => {
+                  setStartTime(event.target.value);
+                  setError("");
+                }}
                 className="
                   w-full
                   border
@@ -347,14 +345,14 @@ export default function ScheduleModal({
                   rounded-lg
                   px-3
                   py-2
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-brand-blue/30
                 "
               />
-
             </div>
 
-
             <div>
-
               <label className="block text-sm font-medium mb-1">
                 End Time
               </label>
@@ -362,9 +360,10 @@ export default function ScheduleModal({
               <input
                 type="time"
                 value={endTime}
-                onChange={(event) =>
-                  setEndTime(event.target.value)
-                }
+                onChange={(event) => {
+                  setEndTime(event.target.value);
+                  setError("");
+                }}
                 className="
                   w-full
                   border
@@ -372,16 +371,25 @@ export default function ScheduleModal({
                   rounded-lg
                   px-3
                   py-2
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-brand-blue/30
                 "
               />
-
             </div>
-
           </div>
 
+          {/* Error */}
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2">
+              <p className="text-sm text-red-700">
+                {error}
+              </p>
+            </div>
+          )}
 
+          {/* Actions */}
           <div className="flex justify-end gap-3 pt-3">
-
             <button
               type="button"
               onClick={onClose}
@@ -393,11 +401,11 @@ export default function ScheduleModal({
                 border-gray-300
                 font-medium
                 hover:bg-gray-50
+                transition
               "
             >
               Cancel
             </button>
-
 
             <button
               type="submit"
@@ -409,19 +417,16 @@ export default function ScheduleModal({
                 text-white
                 font-semibold
                 hover:opacity-90
+                transition
               "
             >
               {isEditing
                 ? "Save Changes"
                 : "Create Schedule"}
             </button>
-
           </div>
-
         </form>
-
       </div>
-
     </div>
   );
 }
