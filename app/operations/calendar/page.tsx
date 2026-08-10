@@ -39,9 +39,52 @@ export default function CalendarPage() {
   const [editingSchedule, setEditingSchedule] =
     useState<Schedule | null>(null);
 
+  const [scheduleError, setScheduleError] =
+    useState("");
+
   const handleCreateSchedule = (
     schedule: ScheduleInput
   ) => {
+    const conflict = schedules.find((existing) => {
+      // Ignore the schedule being edited
+      if (
+        schedule.id &&
+        existing.id === schedule.id
+      ) {
+        return false;
+      }
+
+      // Different crew = no conflict
+      if (
+        existing.crewId !== schedule.crewId
+      ) {
+        return false;
+      }
+
+      // Different day = no conflict
+      if (
+        existing.day !== schedule.day
+      ) {
+        return false;
+      }
+
+      // Check whether the times overlap
+      return (
+        schedule.startTime < existing.endTime &&
+        schedule.endTime > existing.startTime
+      );
+    });
+
+    if (conflict) {
+      setScheduleError(
+        `This crew is already scheduled on ${schedule.day} from ${conflict.startTime} to ${conflict.endTime}.`
+      );
+
+      return;
+    }
+
+    setScheduleError("");
+
     setSchedules((current) => {
       if (schedule.id) {
         return current.map((item) =>
@@ -62,12 +105,15 @@ export default function CalendarPage() {
         },
       ];
     });
+
+    setIsScheduleModalOpen(false);
   };
 
   const openScheduleModal = () => {
     setEditingSchedule(null);
     setSelectedCrew("");
     setSelectedDay("");
+    setScheduleError("");
     setIsScheduleModalOpen(true);
   };
 
@@ -78,6 +124,7 @@ export default function CalendarPage() {
     setEditingSchedule(null);
     setSelectedCrew(crewId);
     setSelectedDay(day);
+    setScheduleError("");
     setIsScheduleModalOpen(true);
   };
 
@@ -87,6 +134,7 @@ export default function CalendarPage() {
     setEditingSchedule(schedule);
     setSelectedCrew(schedule.crewId);
     setSelectedDay(schedule.day);
+    setScheduleError("");
     setIsScheduleModalOpen(true);
   };
 
@@ -146,13 +194,15 @@ export default function CalendarPage() {
 
       <ScheduleModal
         isOpen={isScheduleModalOpen}
-        onClose={() =>
-          setIsScheduleModalOpen(false)
-        }
+        onClose={() => {
+          setScheduleError("");
+          setIsScheduleModalOpen(false);
+        }}
         onCreate={handleCreateSchedule}
         selectedCrew={selectedCrew}
         selectedDay={selectedDay}
         editingSchedule={editingSchedule}
+        scheduleError={scheduleError}
       />
     </>
   );
