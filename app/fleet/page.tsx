@@ -79,6 +79,7 @@ export default function FleetPage() {
   const [vehicleType, setVehicleType] = useState("Bucket Truck");
   const [status, setStatus] = useState("Available");
   const [crewId, setCrewId] = useState("");
+  const [formError, setFormError] = useState(""); 
 
   const resetForm = () => {
     setVehicleId("");
@@ -86,6 +87,7 @@ export default function FleetPage() {
     setVehicleType("Bucket Truck");
     setStatus("Available");
     setCrewId("");
+    setFormError("");
   };
 
   const closeForm = () => {
@@ -114,39 +116,69 @@ export default function FleetPage() {
   };
 
   const saveVehicle = () => {
-    if (!vehicleId.trim() || !vehicleNumber.trim()) {
-      return;
-    }
+  const trimmedId = vehicleId.trim();
+  const trimmedNumber = vehicleNumber.trim();
 
-    if (editingVehicleIndex !== null) {
-      setVehicles(
-        vehicles.map((vehicle, index) =>
-          index === editingVehicleIndex
-            ? {
-                ...vehicle,
-                id: vehicleId.trim(),
-                number: vehicleNumber.trim(),
-                type: vehicleType,
-                status,
-                crewId,
-              }
-            : vehicle
-        )
-      );
-    } else {
-      const newVehicle: Vehicle = {
-        id: vehicleId.trim(),
-        number: vehicleNumber.trim(),
-        type: vehicleType,
-        status,
-        crewId,
-      };
+  if (!trimmedId || !trimmedNumber) {
+    setFormError("Vehicle ID and Vehicle Number are required.");
+    return;
+  }
 
-      setVehicles([...vehicles, newVehicle]);
-    }
+  const duplicateId = vehicles.some(
+    (vehicle, index) =>
+      vehicle.id.toLowerCase() === trimmedId.toLowerCase() &&
+      index !== editingVehicleIndex
+  );
 
-    closeForm();
-  };
+  if (duplicateId) {
+    setFormError(
+      `Vehicle ID "${trimmedId}" is already in use. Please enter a different ID.`
+    );
+    return;
+  }
+
+  const duplicateNumber = vehicles.some(
+    (vehicle, index) =>
+      vehicle.number.toLowerCase() === trimmedNumber.toLowerCase() &&
+      index !== editingVehicleIndex
+  );
+
+  if (duplicateNumber) {
+    setFormError(
+      `Vehicle Number "${trimmedNumber}" is already in use. Please enter a different vehicle number.`
+    );
+    return;
+  }
+
+  if (editingVehicleIndex !== null) {
+    setVehicles(
+      vehicles.map((vehicle, index) =>
+        index === editingVehicleIndex
+          ? {
+              ...vehicle,
+              id: trimmedId,
+              number: trimmedNumber,
+              type: vehicleType,
+              status,
+              crewId,
+            }
+          : vehicle
+      )
+    );
+  } else {
+    const newVehicle: Vehicle = {
+      id: trimmedId,
+      number: trimmedNumber,
+      type: vehicleType,
+      status,
+      crewId,
+    };
+
+    setVehicles([...vehicles, newVehicle]);
+  }
+
+  closeForm();
+};
 
   const deleteVehicle = () => {
     if (vehicleToDelete === null) {
@@ -371,6 +403,12 @@ export default function FleetPage() {
 
             {/* Form */}
             <div className="p-6 space-y-5">
+              {formError && (
+  <div className="mx-6 mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    {formError}
+  </div>
+)}
+
               {/* Vehicle ID */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
