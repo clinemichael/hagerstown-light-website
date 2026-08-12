@@ -1,211 +1,132 @@
 "use client";
 
-import { Plus, Trash2, Truck, X } from "lucide-react";
+import {
+  CalendarDays,
+  Gauge,
+  Plus,
+  Trash2,
+  Truck,
+  Wrench,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 
-const crews = [
-  {
-    id: "C-01",
-    name: "Line Crew 1",
-  },
-  {
-    id: "C-02",
-    name: "Line Crew 2",
-  },
-  {
-    id: "C-03",
-    name: "Service Crew",
-  },
-];
-
-const initialVehicles = [
-  {
-    id: "T-12",
-    number: "Truck 12",
-    type: "Bucket Truck",
-    status: "Available",
-    crewId: "C-01",
-  },
-  {
-    id: "T-18",
-    number: "Truck 18",
-    type: "Bucket Truck",
-    status: "Available",
-    crewId: "C-01",
-  },
-  {
-    id: "T-21",
-    number: "Truck 21",
-    type: "Line Truck",
-    status: "Assigned",
-    crewId: "C-02",
-  },
-  {
-    id: "T-24",
-    number: "Truck 24",
-    type: "Bucket Truck",
-    status: "Assigned",
-    crewId: "C-02",
-  },
-  {
-    id: "T-26",
-    number: "Truck 26",
-    type: "Service Truck",
-    status: "Available",
-    crewId: "C-02",
-  },
-  {
-    id: "ST-01",
-    number: "Service Truck 1",
-    type: "Service Truck",
-    status: "Assigned",
-    crewId: "C-03",
-  },
-];
-
-type Vehicle = (typeof initialVehicles)[number];
+import {
+  vehicles as initialVehicles,
+  type Vehicle,
+} from "@/data/vehicles";
 
 export default function FleetPage() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
+  const [vehicles, setVehicles] =
+    useState<Vehicle[]>(initialVehicles);
 
   const [showForm, setShowForm] = useState(false);
-  const [editingVehicleIndex, setEditingVehicleIndex] = useState<number | null>(
-    null
-  );
-  const [vehicleToDelete, setVehicleToDelete] = useState<number | null>(null);
+  const [editingVehicle, setEditingVehicle] =
+    useState<Vehicle | null>(null);
+  const [vehicleToDelete, setVehicleToDelete] =
+    useState<Vehicle | null>(null);
 
-  const [vehicleId, setVehicleId] = useState("");
-  const [vehicleNumber, setVehicleNumber] = useState("");
-  const [vehicleType, setVehicleType] = useState("Bucket Truck");
-  const [status, setStatus] = useState("Available");
-  const [crewId, setCrewId] = useState("");
-  const [formError, setFormError] = useState(""); 
+  const [name, setName] = useState("");
+  const [id, setId] = useState("");
+  const [type, setType] = useState("");
+  const [mileage, setMileage] = useState("");
+  const [maintenance, setMaintenance] = useState("");
 
   const resetForm = () => {
-    setVehicleId("");
-    setVehicleNumber("");
-    setVehicleType("Bucket Truck");
-    setStatus("Available");
-    setCrewId("");
-    setFormError("");
+    setName("");
+    setId("");
+    setType("");
+    setMileage("");
+    setMaintenance("");
   };
 
   const closeForm = () => {
     resetForm();
+    setEditingVehicle(null);
     setShowForm(false);
-    setEditingVehicleIndex(null);
   };
 
   const openCreateForm = () => {
     resetForm();
-    setEditingVehicleIndex(null);
+    setEditingVehicle(null);
     setShowForm(true);
   };
 
-  const openEditForm = (index: number) => {
-    const vehicle = vehicles[index];
+  const openEditForm = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
 
-    setVehicleId(vehicle.id);
-    setVehicleNumber(vehicle.number);
-    setVehicleType(vehicle.type);
-    setStatus(vehicle.status);
-    setCrewId(vehicle.crewId);
+    setName(vehicle.name);
+    setId(vehicle.id);
+    setType(vehicle.type);
+    setMileage(vehicle.mileage.toString());
+    setMaintenance(vehicle.maintenance);
 
-    setEditingVehicleIndex(index);
     setShowForm(true);
   };
 
   const saveVehicle = () => {
-  const trimmedId = vehicleId.trim();
-  const trimmedNumber = vehicleNumber.trim();
-
-  if (!trimmedId || !trimmedNumber) {
-    setFormError("Vehicle ID and Vehicle Number are required.");
-    return;
-  }
-
-  const duplicateId = vehicles.some(
-    (vehicle, index) =>
-      vehicle.id.toLowerCase() === trimmedId.toLowerCase() &&
-      index !== editingVehicleIndex
-  );
-
-  if (duplicateId) {
-    setFormError(
-      `Vehicle ID "${trimmedId}" is already in use. Please enter a different ID.`
-    );
-    return;
-  }
-
-  const duplicateNumber = vehicles.some(
-    (vehicle, index) =>
-      vehicle.number.toLowerCase() === trimmedNumber.toLowerCase() &&
-      index !== editingVehicleIndex
-  );
-
-  if (duplicateNumber) {
-    setFormError(
-      `Vehicle Number "${trimmedNumber}" is already in use. Please enter a different vehicle number.`
-    );
-    return;
-  }
-
-  if (editingVehicleIndex !== null) {
-    setVehicles(
-      vehicles.map((vehicle, index) =>
-        index === editingVehicleIndex
-          ? {
-              ...vehicle,
-              id: trimmedId,
-              number: trimmedNumber,
-              type: vehicleType,
-              status,
-              crewId,
-            }
-          : vehicle
-      )
-    );
-  } else {
-    const newVehicle: Vehicle = {
-      id: trimmedId,
-      number: trimmedNumber,
-      type: vehicleType,
-      status,
-      crewId,
-    };
-
-    setVehicles([...vehicles, newVehicle]);
-  }
-
-  closeForm();
-};
-
-  const deleteVehicle = () => {
-    if (vehicleToDelete === null) {
+    if (
+      !name.trim() ||
+      !id.trim() ||
+      !type.trim() ||
+      !mileage.trim() ||
+      !maintenance
+    ) {
       return;
     }
 
-    setVehicles(
-      vehicles.filter((_, index) => index !== vehicleToDelete)
+    const updatedVehicle: Vehicle = {
+      id: id.trim(),
+      name: name.trim(),
+      type: type.trim(),
+      mileage: Number(mileage),
+      maintenance,
+    };
+
+    if (editingVehicle) {
+      setVehicles((current) =>
+        current.map((vehicle) =>
+          vehicle.id === editingVehicle.id
+            ? updatedVehicle
+            : vehicle
+        )
+      );
+    } else {
+      setVehicles((current) => [
+        ...current,
+        updatedVehicle,
+      ]);
+    }
+
+    closeForm();
+  };
+
+  const deleteVehicle = () => {
+    if (!vehicleToDelete) {
+      return;
+    }
+
+    setVehicles((current) =>
+      current.filter(
+        (vehicle) =>
+          vehicle.id !== vehicleToDelete.id
+      )
     );
 
     setVehicleToDelete(null);
   };
 
-  const getCrew = (id: string) =>
-    crews.find((crew) => crew.id === id);
-
   return (
     <div>
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-brand-blue">
+          <h2 className="text-2xl font-bold text-brand-blue">
             Fleet
-          </h1>
+          </h2>
 
           <p className="text-gray-600 mt-1">
-            Manage vehicles, assignments, and fleet status.
+            Manage vehicle information, mileage, and maintenance.
           </p>
         </div>
 
@@ -215,7 +136,6 @@ export default function FleetPage() {
           className="
             inline-flex
             items-center
-            justify-center
             gap-2
             bg-brand-blue
             text-white
@@ -232,162 +152,151 @@ export default function FleetPage() {
         </button>
       </div>
 
-      {/* Fleet Cards */}
-      <div className="grid lg:grid-cols-2 2xl:grid-cols-3 gap-6">
-        {vehicles.map((vehicle, index) => {
-          const crew = getCrew(vehicle.crewId);
+      {/* Vehicle List */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-left px-5 py-4 text-sm font-semibold text-gray-600">
+                  Vehicle
+                </th>
 
-          return (
-            <div
-              key={vehicle.id}
-              className="
-                bg-white
-                border
-                border-gray-200
-                rounded-xl
-                p-6
-                shadow-sm
-                hover:shadow-md
-                transition
-              "
-            >
-              {/* Vehicle Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="
-                      w-11
-                      h-11
-                      rounded-lg
-                      bg-blue-50
-                      flex
-                      items-center
-                      justify-center
-                    "
-                  >
-                    <Truck
-                      size={22}
-                      className="text-brand-blue"
-                    />
-                  </div>
+                <th className="text-left px-5 py-4 text-sm font-semibold text-gray-600">
+                  ID
+                </th>
 
-                  <div>
-                    <h3 className="text-xl font-bold text-brand-blue">
-                      {vehicle.number}
-                    </h3>
+                <th className="text-left px-5 py-4 text-sm font-semibold text-gray-600">
+                  Type
+                </th>
 
-                    <p className="text-sm text-gray-500">
-                      {vehicle.id}
-                    </p>
-                  </div>
-                </div>
+                <th className="text-left px-5 py-4 text-sm font-semibold text-gray-600">
+                  Mileage
+                </th>
 
-                <span
-                  className={`
-                    text-xs
-                    font-semibold
-                    px-3
-                    py-1
-                    rounded-full
-                    ${
-                      vehicle.status === "Available"
-                        ? "bg-green-100 text-green-700"
-                        : vehicle.status === "Assigned"
-                        ? "bg-blue-100 text-blue-700"
-                        : vehicle.status === "Maintenance"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-red-100 text-red-700"
-                    }
-                  `}
+                <th className="text-left px-5 py-4 text-sm font-semibold text-gray-600">
+                  Next Maintenance
+                </th>
+
+                <th className="text-right px-5 py-4 text-sm font-semibold text-gray-600">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-100">
+              {vehicles.map((vehicle) => (
+                <tr
+                  key={vehicle.id}
+                  className="hover:bg-gray-50"
                 >
-                  {vehicle.status}
-                </span>
-              </div>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="
+                          w-9
+                          h-9
+                          rounded-lg
+                          bg-blue-50
+                          flex
+                          items-center
+                          justify-center
+                        "
+                      >
+                        <Truck
+                          size={18}
+                          className="text-brand-blue"
+                        />
+                      </div>
 
-              {/* Vehicle Information */}
-              <div className="mt-6 space-y-4">
-                <div>
-                  <p className="text-xs text-gray-500">
-                    Vehicle Type
-                  </p>
+                      <span className="font-semibold text-gray-800">
+                        {vehicle.name}
+                      </span>
+                    </div>
+                  </td>
 
-                  <p className="mt-1 font-semibold text-gray-700">
+                  <td className="px-5 py-4 text-sm text-gray-600">
+                    {vehicle.id}
+                  </td>
+
+                  <td className="px-5 py-4 text-sm text-gray-600">
                     {vehicle.type}
-                  </p>
-                </div>
+                  </td>
 
-                <div>
-                  <p className="text-xs text-gray-500">
-                    Current Crew
-                  </p>
+                  <td className="px-5 py-4 text-sm font-medium text-gray-700">
+                    {vehicle.mileage.toLocaleString()} mi
+                  </td>
 
-                  <p className="mt-1 font-semibold text-gray-700">
-                    {crew?.name || "Unassigned"}
-                  </p>
-                </div>
-              </div>
+                  <td className="px-5 py-4 text-sm text-gray-600">
+                    {vehicle.maintenance}
+                  </td>
 
-              {/* Actions */}
-              <div className="flex gap-2 mt-6 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => openEditForm(index)}
-                  className="
-                    flex-1
-                    border
-                    border-gray-200
-                    rounded-lg
-                    py-2
-                    text-sm
-                    font-semibold
-                    text-brand-blue
-                    hover:bg-blue-50
-                    transition
-                  "
-                >
-                  Edit
-                </button>
+                  <td className="px-5 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openEditForm(vehicle)
+                        }
+                        className="
+                          px-3
+                          py-1.5
+                          text-sm
+                          font-semibold
+                          text-brand-blue
+                          border
+                          border-gray-200
+                          rounded-lg
+                          hover:bg-blue-50
+                        "
+                      >
+                        Edit
+                      </button>
 
-                <button
-                  type="button"
-                  onClick={() => setVehicleToDelete(index)}
-                  className="
-                    flex-1
-                    border
-                    border-gray-200
-                    rounded-lg
-                    py-2
-                    text-sm
-                    font-semibold
-                    text-gray-600
-                    hover:bg-gray-50
-                    transition
-                  "
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          );
-        })}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setVehicleToDelete(vehicle)
+                        }
+                        className="
+                          px-3
+                          py-1.5
+                          text-sm
+                          font-semibold
+                          text-red-600
+                          border
+                          border-red-200
+                          rounded-lg
+                          hover:bg-red-50
+                        "
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Add/Edit Vehicle Modal */}
+      {/* Create / Edit Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-xl bg-white rounded-xl shadow-xl">
-            {/* Modal Header */}
+          <div className="w-full max-w-lg bg-white rounded-xl shadow-xl">
+            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <div>
                 <h3 className="text-xl font-bold text-brand-blue">
-                  {editingVehicleIndex !== null
+                  {editingVehicle
                     ? "Edit Vehicle"
                     : "Add Vehicle"}
                 </h3>
 
                 <p className="text-sm text-gray-500 mt-1">
-                  {editingVehicleIndex !== null
-                    ? "Update vehicle information and assignment."
+                  {editingVehicle
+                    ? "Update vehicle information."
                     : "Add a vehicle to the fleet."}
                 </p>
               </div>
@@ -403,13 +312,34 @@ export default function FleetPage() {
 
             {/* Form */}
             <div className="p-6 space-y-5">
-              {formError && (
-  <div className="mx-6 mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-    {formError}
-  </div>
-)}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Vehicle Name
+                </label>
 
-              {/* Vehicle ID */}
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(event) =>
+                    setName(event.target.value)
+                  }
+                  placeholder="Truck 28"
+                  className="
+                    w-full
+                    border
+                    border-gray-200
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-100
+                    focus:border-brand-blue
+                  "
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Vehicle ID
@@ -417,11 +347,11 @@ export default function FleetPage() {
 
                 <input
                   type="text"
-                  value={vehicleId}
+                  value={id}
                   onChange={(event) =>
-                    setVehicleId(event.target.value)
+                    setId(event.target.value)
                   }
-                  placeholder="Example: T-30"
+                  placeholder="T-28"
                   className="
                     w-full
                     border
@@ -438,46 +368,18 @@ export default function FleetPage() {
                 />
               </div>
 
-              {/* Vehicle Number */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Vehicle Number
-                </label>
-
-                <input
-                  type="text"
-                  value={vehicleNumber}
-                  onChange={(event) =>
-                    setVehicleNumber(event.target.value)
-                  }
-                  placeholder="Example: Truck 30"
-                  className="
-                    w-full
-                    border
-                    border-gray-200
-                    rounded-lg
-                    px-4
-                    py-2.5
-                    text-sm
-                    outline-none
-                    focus:ring-2
-                    focus:ring-blue-100
-                    focus:border-brand-blue
-                  "
-                />
-              </div>
-
-              {/* Type */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Vehicle Type
                 </label>
 
-                <select
-                  value={vehicleType}
+                <input
+                  type="text"
+                  value={type}
                   onChange={(event) =>
-                    setVehicleType(event.target.value)
+                    setType(event.target.value)
                   }
+                  placeholder="Bucket Truck"
                   className="
                     w-full
                     border
@@ -486,46 +388,27 @@ export default function FleetPage() {
                     px-4
                     py-2.5
                     text-sm
-                    bg-white
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-100
+                    focus:border-brand-blue
                   "
-                >
-                  <option value="Bucket Truck">
-                    Bucket Truck
-                  </option>
-
-                  <option value="Line Truck">
-                    Line Truck
-                  </option>
-
-                  <option value="Service Truck">
-                    Service Truck
-                  </option>
-
-                  <option value="Pickup Truck">
-                    Pickup Truck
-                  </option>
-
-                  <option value="Trailer">
-                    Trailer
-                  </option>
-
-                  <option value="Other">
-                    Other
-                  </option>
-                </select>
+                />
               </div>
 
-              {/* Status */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Status
+                  Mileage
                 </label>
 
-                <select
-                  value={status}
+                <input
+                  type="number"
+                  min="0"
+                  value={mileage}
                   onChange={(event) =>
-                    setStatus(event.target.value)
+                    setMileage(event.target.value)
                   }
+                  placeholder="45000"
                   className="
                     w-full
                     border
@@ -534,37 +417,24 @@ export default function FleetPage() {
                     px-4
                     py-2.5
                     text-sm
-                    bg-white
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-100
+                    focus:border-brand-blue
                   "
-                >
-                  <option value="Available">
-                    Available
-                  </option>
-
-                  <option value="Assigned">
-                    Assigned
-                  </option>
-
-                  <option value="Maintenance">
-                    Maintenance
-                  </option>
-
-                  <option value="Out of Service">
-                    Out of Service
-                  </option>
-                </select>
+                />
               </div>
 
-              {/* Crew */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Assigned Crew
+                  Next Maintenance
                 </label>
 
-                <select
-                  value={crewId}
+                <input
+                  type="date"
+                  value={maintenance}
                   onChange={(event) =>
-                    setCrewId(event.target.value)
+                    setMaintenance(event.target.value)
                   }
                   className="
                     w-full
@@ -575,21 +445,12 @@ export default function FleetPage() {
                     py-2.5
                     text-sm
                     bg-white
+                    outline-none
+                    focus:ring-2
+                    focus:ring-blue-100
+                    focus:border-brand-blue
                   "
-                >
-                  <option value="">
-                    No crew assigned
-                  </option>
-
-                  {crews.map((crew) => (
-                    <option
-                      key={crew.id}
-                      value={crew.id}
-                    >
-                      {crew.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
 
@@ -617,8 +478,11 @@ export default function FleetPage() {
                 type="button"
                 onClick={saveVehicle}
                 disabled={
-                  !vehicleId.trim() ||
-                  !vehicleNumber.trim()
+                  !name.trim() ||
+                  !id.trim() ||
+                  !type.trim() ||
+                  !mileage.trim() ||
+                  !maintenance
                 }
                 className="
                   px-4
@@ -633,9 +497,9 @@ export default function FleetPage() {
                   disabled:cursor-not-allowed
                 "
               >
-                {editingVehicleIndex !== null
-                  ? "Update Vehicle"
-                  : "Add Vehicle"}
+                {editingVehicle
+                  ? "Save Changes"
+                  : "Create Vehicle"}
               </button>
             </div>
           </div>
@@ -643,29 +507,31 @@ export default function FleetPage() {
       )}
 
       {/* Delete Confirmation */}
-      {vehicleToDelete !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      {vehicleToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
-            <h3 className="text-xl font-bold text-brand-blue">
-              Delete Vehicle
+            <h3 className="text-xl font-bold text-gray-800">
+              Delete Vehicle?
             </h3>
 
             <p className="mt-2 text-gray-600">
               Are you sure you want to delete{" "}
               <span className="font-semibold">
-                {vehicles[vehicleToDelete]?.number}
+                {vehicleToDelete.name}
               </span>
               ?
             </p>
 
             <p className="mt-2 text-sm text-gray-500">
-              This will remove the vehicle from the operations portal.
+              This will remove the vehicle from the fleet.
             </p>
 
             <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
-                onClick={() => setVehicleToDelete(null)}
+                onClick={() =>
+                  setVehicleToDelete(null)
+                }
                 className="
                   px-4
                   py-2
