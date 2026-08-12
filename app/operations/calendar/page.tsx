@@ -2,6 +2,16 @@
 
 import { useState } from "react";
 
+import { employees } from "@/data/employees";
+import { vehicles } from "@/data/vehicles";
+import { getCrewResources } from "@/data/scheduling/resources";
+
+import {
+  findSchedulingConflicts,
+} from "./conflicts";
+
+import type { ScheduledJob } from "./types";
+
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CalendarGrid from "@/components/calendar/CalendarGrid";
 import CrewPanel from "@/components/calendar/CrewPanel";
@@ -27,6 +37,16 @@ type ScheduleInput = {
   endTime: string;
 };
 
+const dayDates: Record<string, string> = {
+  Monday: "2026-08-10",
+  Tuesday: "2026-08-11",
+  Wednesday: "2026-08-12",
+  Thursday: "2026-08-13",
+  Friday: "2026-08-14",
+  Saturday: "2026-08-15",
+  Sunday: "2026-08-16",
+};
+
 export default function CalendarPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
 
@@ -45,39 +65,88 @@ export default function CalendarPage() {
   const handleCreateSchedule = (
     schedule: ScheduleInput
   ) => {
-    const conflict = schedules.find((existing) => {
-      // Ignore the schedule being edited
-      if (
-        schedule.id &&
-        existing.id === schedule.id
-      ) {
-        return false;
-      }
+    const crewResources = getCrewResources(
+      schedule.crewId
+    );
 
-      // Different crew = no conflict
-      if (
-        existing.crewId !== schedule.crewId
-      ) {
-        return false;
-      }
-
-      // Different day = no conflict
-      if (
-        existing.day !== schedule.day
-      ) {
-        return false;
-      }
-
-      // Check whether the times overlap
-      return (
-        schedule.startTime < existing.endTime &&
-        schedule.endTime > existing.startTime
-      );
-    });
-
-    if (conflict) {
+    if (!crewResources) {
       setScheduleError(
-        `This crew is already scheduled on ${schedule.day} from ${conflict.startTime} to ${conflict.endTime}.`
+        "Unable to find the selected crew."
+      );
+      return;
+    }
+
+    const date = dayDates[schedule.day];
+
+    if (!date) {
+      setScheduleError(
+        "Unable to determine the selected date."
+      );
+      return;
+    }
+
+    const employeeNames = Object.fromEntries(
+      employees.map((employee) => [
+        employee.id,
+        employee.name,
+      ])
+    );
+
+    const vehicleNames = Object.fromEntries(
+      vehicles.map((vehicle) => [
+        vehicle.id,
+        vehicle.name,
+      ])
+    );
+
+    const newJob: ScheduledJob = {
+      id: schedule.id ?? crypto.randomUUID(),
+      jobNumber: schedule.workOrder,
+      jobName: schedule.address,
+      date,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+      crewId: crewResources.crewId,
+      crewName: crewResources.crewName,
+      employeeIds: crewResources.employeeIds,
+      vehicleIds: crewResources.vehicleIds,
+    };
+
+    const existingJobs: ScheduledJob[] =
+      schedules.map((existing) => {
+        const resources = getCrewResources(
+          existing.crewId
+        );
+
+        return {
+          id: existing.id,
+          jobNumber: existing.workOrder,
+          jobName: existing.address,
+          date: dayDates[existing.day],
+          startTime: existing.startTime,
+          endTime: existing.endTime,
+          crewId: existing.crewId,
+          crewName:
+            resources?.crewName ?? "Unknown Crew",
+          employeeIds:
+            resources?.employeeIds ?? [],
+          vehicleIds:
+            resources?.vehicleIds ?? [],
+        };
+      });
+
+    const conflicts = findSchedulingConflicts(
+      newJob,
+      existingJobs,
+      employeeNames,
+      vehicleNames
+    );
+
+    if (conflicts.length > 0) {
+      const conflict = conflicts[0];
+
+      setScheduleError(
+        `${conflict.resourceName} is already scheduled on ${schedule.day} from ${conflict.conflictingJob.startTime} to ${conflict.conflictingJob.endTime}.`
       );
 
       return;
@@ -85,25 +154,26 @@ export default function CalendarPage() {
 
     setScheduleError("");
 
+    const savedSchedule: Schedule = {
+      id: schedule.id ?? crypto.randomUUID(),
+      workOrder: schedule.workOrder,
+      address: schedule.address,
+      crewId: schedule.crewId,
+      day: schedule.day,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+    };
+
     setSchedules((current) => {
       if (schedule.id) {
         return current.map((item) =>
           item.id === schedule.id
-            ? {
-                ...schedule,
-                id: schedule.id,
-              }
+            ? savedSchedule
             : item
         );
       }
 
-      return [
-        ...current,
-        {
-          ...schedule,
-          id: crypto.randomUUID(),
-        },
-      ];
+      return [...current, savedSchedule];
     });
 
     setIsScheduleModalOpen(false);
@@ -151,11 +221,19 @@ export default function CalendarPage() {
 
   return (
     <>
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-gray-600">
-            Schedule work, assign crews, and manage daily operations.
-          </p>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-brand-blue">
+              Operations Calendar
+            </h1>
+
+            <p className="text-gray-600 mt-1">
+              Schedule work, assign crews, and manage
+              daily operations.
+            </p>
+          </div>
 
           <button
             type="button"

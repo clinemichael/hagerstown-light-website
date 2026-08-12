@@ -3,58 +3,11 @@
 import { Search, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 
-type Employee = {
-  id: string;
-  name: string;
-  title: string;
-  status: "Active" | "Inactive";
-  phone: string;
-};
+import {
+  employees as initialEmployees,
+  type Employee,
+} from "@/data/employees";
 
-const initialEmployees: Employee[] = [
-  {
-    id: "1001",
-    name: "John Smith",
-    title: "Lead Lineman",
-    status: "Active",
-    phone: "301-555-0101",
-  },
-  {
-    id: "1002",
-    name: "Robert Jones",
-    title: "Lineman",
-    status: "Active",
-    phone: "301-555-0102",
-  },
-  {
-    id: "1003",
-    name: "Michael Davis",
-    title: "Lineman",
-    status: "Active",
-    phone: "301-555-0103",
-  },
-  {
-    id: "1004",
-    name: "James Wilson",
-    title: "Apprentice Lineman",
-    status: "Active",
-    phone: "301-555-0104",
-  },
-  {
-    id: "1005",
-    name: "David Miller",
-    title: "Service Technician",
-    status: "Active",
-    phone: "301-555-0105",
-  },
-  {
-    id: "1006",
-    name: "Chris Anderson",
-    title: "Lineman",
-    status: "Inactive",
-    phone: "301-555-0106",
-  },
-];
 
 export default function EmployeesPage() {
   const [employees, setEmployees] =
