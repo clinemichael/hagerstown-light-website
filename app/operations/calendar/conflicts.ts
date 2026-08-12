@@ -1,7 +1,7 @@
 import { ScheduledJob } from "./types";
 
 export type SchedulingConflict = {
-  type: "employee" | "vehicle";
+  type: "crew" | "employee" | "vehicle";
   resourceId: string;
   resourceName: string;
   conflictingJob: ScheduledJob;
@@ -46,6 +46,24 @@ export function findSchedulingConflicts(
     ) {
       continue;
     }
+
+    // Check crew
+    const crewConflict =
+  newJob.crewId === existingJob.crewId;
+
+if (newJob.crewId === existingJob.crewId) {
+  conflicts.push({
+    type: "crew",
+    resourceId: newJob.crewId,
+    resourceName: newJob.crewName,
+    conflictingJob: existingJob,
+  });
+
+  // If the entire crew is already scheduled,
+  // don't report the crew's individual employees
+  // and vehicles as duplicate conflicts.
+  continue;
+}
 
     // Check employees
     for (const employeeId of newJob.employeeIds) {

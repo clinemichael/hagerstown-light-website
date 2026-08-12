@@ -143,14 +143,26 @@ export default function CalendarPage() {
     );
 
     if (conflicts.length > 0) {
-      const conflict = conflicts[0];
+  const conflictMessages = conflicts.map(
+    (conflict) => {
+      const conflictType =
+        conflict.type === "crew"
+          ? "Crew"
+          :
+        conflict.type === "employee"
+          ? "Employee"
+          : "Vehicle";
 
-      setScheduleError(
-        `${conflict.resourceName} is already scheduled on ${schedule.day} from ${conflict.conflictingJob.startTime} to ${conflict.conflictingJob.endTime}.`
-      );
-
-      return;
+      return `${conflictType}: ${conflict.resourceName} is already assigned to ${conflict.conflictingJob.jobNumber} from ${conflict.conflictingJob.startTime} to ${conflict.conflictingJob.endTime}.`;
     }
+  );
+
+  setScheduleError(
+    `Scheduling conflict:\n${conflictMessages.join("\n")}`
+  );
+
+  return;
+}
 
     setScheduleError("");
 
