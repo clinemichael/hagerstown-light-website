@@ -1,4 +1,3 @@
-import AppLayout from "@/components/layout/AppLayout";
 import QuickActions from "@/components/dashboard/QuickActions";
 import OperationsStatus from "@/components/dashboard/OperationsStatus";
 import TodaysOperations from "@/components/dashboard/TodaysOperations";
@@ -7,7 +6,7 @@ import OperationsAlerts from "@/components/dashboard/OperationsAlerts";
 
 export default function Dashboard() {
   return (
-    <AppLayout>
+    <div>
 
       <h1 className="text-3xl font-bold text-brand-blue">
         HLD Operations Dashboard
@@ -24,6 +23,6 @@ export default function Dashboard() {
 </div>
         <OperationsAlerts />
         
-    </AppLayout>
+    </div>
   );
 }

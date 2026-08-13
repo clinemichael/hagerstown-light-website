@@ -1,9 +1,8 @@
-import AppLayout from "@/components/layout/AppLayout";
 import SafetyForms from "@/components/safety/SafetyForms";
 
 export default function SafetyPage() {
   return (
-    <AppLayout>
+    <div>
       <h1 className="text-3xl font-bold text-brand-blue">
         Safety
       </h1>
@@ -13,6 +12,6 @@ export default function SafetyPage() {
       </p>
 
       <SafetyForms />
-    </AppLayout>
+    </div>
   );
 }
