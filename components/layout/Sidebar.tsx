@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Zap,
@@ -10,6 +13,7 @@ import {
   BarChart3,
   Settings,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -24,6 +28,13 @@ const navigation = [
 ];
 
 export default function Sidebar() {
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.replace("/");
+  };
+
   return (
     <aside className="w-72 h-screen bg-brand-blue text-white flex flex-col">
 
@@ -56,9 +67,17 @@ export default function Sidebar() {
       {/* User */}
       <div className="border-t border-white/20 p-6">
         <p className="font-semibold">Michael Cline</p>
+
         <p className="text-sm text-white/70">
           Hagerstown Light Department
         </p>
+
+        <button
+          onClick={handleSignOut}
+          className="mt-4 w-full rounded-lg border border-white/20 px-4 py-2 text-sm hover:bg-white/10 transition"
+        >
+          Sign Out
+        </button>
       </div>
 
     </aside>
