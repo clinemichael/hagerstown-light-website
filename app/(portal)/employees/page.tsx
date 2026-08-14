@@ -1,17 +1,19 @@
 "use client";
 
 import { Search, UserPlus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
-  employees as initialEmployees,
+  getActiveEmployees,
   type Employee,
 } from "@/data/employees";
 
 
 export default function EmployeesPage() {
   const [employees, setEmployees] =
-    useState<Employee[]>(initialEmployees);
+  useState<Employee[]>([]);
+
+const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -23,6 +25,24 @@ export default function EmployeesPage() {
   const [employeeStatus, setEmployeeStatus] =
     useState<Employee["status"]>("Active");
   const [employeePhone, setEmployeePhone] = useState("");
+
+  useEffect(() => {
+  const loadEmployees = async () => {
+    try {
+      const data = await getActiveEmployees();
+      setEmployees(data);
+    } catch (error) {
+      console.error(
+        "Unable to load employees:",
+        error
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadEmployees();
+}, []);
 
   const resetForm = () => {
     setEmployeeId("");

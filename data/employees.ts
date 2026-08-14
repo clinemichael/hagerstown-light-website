@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabase";
+
 export type EmployeeStatus =
   | "Active"
   | "Inactive";
@@ -10,47 +12,69 @@ export type Employee = {
   phone: string;
 };
 
-export const employees: Employee[] = [
-  {
-    id: "1001",
-    name: "John Smith",
-    title: "Lead Lineman",
-    status: "Active",
-    phone: "301-555-0101",
-  },
-  {
-    id: "1002",
-    name: "Robert Jones",
-    title: "Lineman",
-    status: "Active",
-    phone: "301-555-0102",
-  },
-  {
-    id: "1003",
-    name: "Michael Davis",
-    title: "Lineman",
-    status: "Active",
-    phone: "301-555-0103",
-  },
-  {
-    id: "1004",
-    name: "James Wilson",
-    title: "Apprentice Lineman",
-    status: "Active",
-    phone: "301-555-0104",
-  },
-  {
-    id: "1005",
-    name: "David Miller",
-    title: "Service Technician",
-    status: "Active",
-    phone: "301-555-0105",
-  },
-  {
-    id: "1006",
-    name: "Chris Anderson",
-    title: "Lineman",
-    status: "Inactive",
-    phone: "301-555-0106",
-  },
-];
+/**
+ * Get all employees.
+ */
+export async function getEmployees(): Promise<Employee[]> {
+  const { data, error } = await supabase
+    .from("employees")
+    .select("id, name, title, status, phone")
+    .order("name");
+
+  if (error) {
+    console.error("Unable to load employees:", error);
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as Employee[];
+}
+
+/**
+ * Get active employees.
+ */
+export async function getActiveEmployees(): Promise<Employee[]> {
+  const { data, error } = await supabase
+    .from("employees")
+    .select("id, name, title, status, phone")
+    .eq("status", "Active")
+    .order("name");
+
+  if (error) {
+    console.error(
+      "Unable to load active employees:",
+      error
+    );
+
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as Employee[];
+}
+
+/**
+ * Get one employee.
+ */
+export async function getEmployee(
+  id: string
+): Promise<Employee | null> {
+  const { data, error } = await supabase
+    .from("employees")
+    .select("id, name, title, status, phone")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "Unable to load employee:",
+      error
+    );
+
+    throw new Error(error.message);
+  }
+
+  return data as Employee | null;
+}
+// Temporary compatibility export.
+// Existing pages will continue using this until
+// they are migrated to the Supabase data layer.
+export const employees: Employee[] = [];

@@ -1,17 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { employees } from "@/data/employees";
+import { getActiveEmployees, type Employee,} from "@/data/employees";
 import { vehicles } from "@/data/vehicles";
 import { getCrewResources } from "@/data/scheduling/resources";
-
-import {
-  findSchedulingConflicts,
-} from "./conflicts";
-
+import { findSchedulingConflicts,} from "./conflicts";
 import type { ScheduledJob } from "./types";
-
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CalendarGrid from "@/components/calendar/CalendarGrid";
 import CrewPanel from "@/components/calendar/CrewPanel";
@@ -48,7 +43,25 @@ const dayDates: Record<string, string> = {
 };
 
 export default function CalendarPage() {
+
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+
+  useEffect(() => {
+  const loadEmployees = async () => {
+    try {
+      const data = await getActiveEmployees();
+      setEmployees(data);
+    } catch (error) {
+      console.error(
+        "Unable to load calendar employees:",
+        error
+      );
+    }
+  };
+
+  loadEmployees();
+}, []);
 
   const [selectedCrew, setSelectedCrew] = useState("");
   const [selectedDay, setSelectedDay] = useState("");
