@@ -1,41 +1,30 @@
 "use client";
 
 import type { DragEvent } from "react";
-import type { Crew } from "@/data/crews";
 
-type Schedule = {
-  id: string;
-  workOrder: string;
-  address: string;
-  crewId: string;
-  day: string;
-  startTime: string;
-  endTime: string;
-};
+import type { Crew } from "@/data/crews";
+import type { Schedule } from "@/app/(portal)/operations/calendar/types";
 
 type CalendarGridProps = {
   schedules: Schedule[];
   crews: Crew[];
+
+  weekDays: {
+    name: string;
+    date: Date;
+    dateString: string;
+    displayDate: string;
+  }[];
+
   onCrewDrop: (crewId: string, day: string) => void;
   onEditSchedule: (schedule: Schedule) => void;
   onDeleteSchedule: (scheduleId: string) => void;
 };
 
-const days = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
-
-const dates = [10, 11, 12, 13, 14, 15, 16];
-
 export default function CalendarGrid({
   schedules,
   crews,
+  weekDays,
   onCrewDrop,
   onEditSchedule,
   onDeleteSchedule,
@@ -63,31 +52,43 @@ export default function CalendarGrid({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+
       {/* Calendar Header */}
+
       <div className="grid grid-cols-7 border-b border-gray-200">
-        {days.map((day, index) => (
+        {weekDays.map((day) => (
           <div
-            key={day}
-            className="text-center py-4 border-r border-gray-200 last:border-r-0"
+            key={day.dateString}
+            className="
+              p-3
+              text-center
+              border-r
+              border-gray-200
+              last:border-r-0
+              bg-gray-50
+            "
           >
             <p className="text-sm font-semibold text-gray-600">
-              {day}
+              {day.name}
             </p>
 
             <p className="text-xl font-bold text-brand-blue mt-1">
-              {dates[index]}
+              {day.displayDate}
             </p>
           </div>
         ))}
       </div>
 
       {/* Calendar Days */}
+
       <div className="grid grid-cols-7 min-h-[500px]">
-        {days.map((day) => {
+        {weekDays.map((day) => {
           const daySchedules = schedules
             .filter(
-              (schedule) => schedule.day === day
+              (schedule) =>
+                schedule.date ===
+                day.dateString
             )
             .sort((a, b) =>
               a.startTime.localeCompare(
@@ -97,12 +98,15 @@ export default function CalendarGrid({
 
           return (
             <div
-              key={day}
+              key={day.dateString}
               onDragOver={(event) =>
                 event.preventDefault()
               }
               onDrop={(event) =>
-                handleDrop(event, day)
+                handleDrop(
+                  event,
+                  day.name
+                )
               }
               className="
                 min-h-[500px]
@@ -115,86 +119,99 @@ export default function CalendarGrid({
               "
             >
               <div className="space-y-2">
-                {daySchedules.map((schedule) => (
-                  <div
-                    key={schedule.id}
-                    className="
-                      bg-green-50
-                      border-l-4
-                      border-green-500
-                      rounded
-                      p-3
-                      shadow-sm
-                    "
-                  >
-                    {/* Time */}
-                    <p className="text-xs font-bold text-green-700">
-                      {schedule.startTime} -{" "}
-                      {schedule.endTime}
-                    </p>
 
-                    {/* Work Order */}
-                    <p className="text-sm font-semibold text-gray-900 mt-1">
-                      {schedule.workOrder}
-                    </p>
+                {daySchedules.map(
+                  (schedule) => (
+                    <div
+                      key={schedule.id}
+                      className="
+                        bg-green-50
+                        border-l-4
+                        border-green-500
+                        rounded
+                        p-3
+                        shadow-sm
+                      "
+                    >
+                      {/* Time */}
 
-                    {/* Crew */}
-                    <p className="text-xs font-medium text-gray-700 mt-1">
-                      {getCrewName(
-                        schedule.crewId
-                      )}
-                    </p>
+                      <p className="text-xs font-bold text-green-700">
+                        {schedule.startTime} -{" "}
+                        {schedule.endTime}
+                      </p>
 
-                    {/* Address */}
-                    <p className="text-xs text-gray-500 mt-1">
-                      {schedule.address}
-                    </p>
+                      {/* Work Order */}
 
-                    {/* Actions */}
-                    <div className="flex gap-3 mt-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onEditSchedule(schedule)
-                        }
-                        className="
-                          text-xs
-                          font-semibold
-                          text-brand-blue
-                          hover:underline
-                        "
-                      >
-                        Edit
-                      </button>
+                      <p className="text-sm font-semibold text-gray-900 mt-1">
+                        {schedule.workOrder}
+                      </p>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onDeleteSchedule(
-                            schedule.id
-                          )
-                        }
-                        className="
-                          text-xs
-                          font-semibold
-                          text-red-600
-                          hover:underline
-                        "
-                      >
-                        Delete
-                      </button>
+                      {/* Crew */}
+
+                      <p className="text-xs font-medium text-gray-700 mt-1">
+                        {getCrewName(
+                          schedule.crewId
+                        )}
+                      </p>
+
+                      {/* Address */}
+
+                      <p className="text-xs text-gray-500 mt-1">
+                        {schedule.address}
+                      </p>
+
+                      {/* Actions */}
+
+                      <div className="flex gap-3 mt-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onEditSchedule(
+                              schedule
+                            )
+                          }
+                          className="
+                            text-xs
+                            font-semibold
+                            text-brand-blue
+                            hover:underline
+                          "
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onDeleteSchedule(
+                              schedule.id
+                            )
+                          }
+                          className="
+                            text-xs
+                            font-semibold
+                            text-red-600
+                            hover:underline
+                          "
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                )}
 
                 {/* Empty Day */}
-                {daySchedules.length === 0 && (
+
+                {daySchedules.length ===
+                  0 && (
                   <div className="h-full min-h-[120px] flex items-center justify-center">
                     <p className="text-xs text-gray-400">
                       Drop crew here
                     </p>
                   </div>
                 )}
+
               </div>
             </div>
           );

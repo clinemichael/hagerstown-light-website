@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   getActiveEmployees,
@@ -17,28 +17,26 @@ import {
   type Vehicle,
 } from "@/data/vehicles";
 
+import {
+  getScheduledJobs,
+  createScheduledJob,
+  updateScheduledJob,
+  deleteScheduledJob,
+  type ScheduledJobRecord,
+} from "@/data/scheduling/scheduledJobs";
+
 import { getCrewResources } from "@/data/scheduling/resources";
 
 import {
   findSchedulingConflicts,
 } from "./conflicts";
 
-import type { ScheduledJob } from "./types";
+import type { Schedule, ScheduledJob } from "./types";
 
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import CalendarGrid from "@/components/calendar/CalendarGrid";
 import CrewPanel from "@/components/calendar/CrewPanel";
 import ScheduleModal from "@/components/calendar/ScheduleModal";
-
-type Schedule = {
-  id: string;
-  workOrder: string;
-  address: string;
-  crewId: string;
-  day: string;
-  startTime: string;
-  endTime: string;
-};
 
 type ScheduleInput = {
   id?: string;
@@ -46,334 +44,663 @@ type ScheduleInput = {
   address: string;
   crewId: string;
   day: string;
+  date?: string;
   startTime: string;
   endTime: string;
 };
 
-const dayDates: Record<string, string> = {
-  Monday: "2026-08-10",
-  Tuesday: "2026-08-11",
-  Wednesday: "2026-08-12",
-  Thursday: "2026-08-13",
-  Friday: "2026-08-14",
-  Saturday: "2026-08-15",
-  Sunday: "2026-08-16",
-};
+const dayNames = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+function getMonday(date: Date) {
+  const result = new Date(date);
+  const day = result.getDay();
+
+  const difference =
+    day === 0 ? -6 : 1 - day;
+
+  result.setDate(
+    result.getDate() + difference
+  );
+
+  result.setHours(0, 0, 0, 0);
+
+  return result;
+}
+
+function formatDateForDatabase(
+  date: Date
+) {
+  const year = date.getFullYear();
+
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(
+  date: Date
+) {
+  return date.toLocaleDateString(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+    }
+  );
+}
+
+function getDayName(
+  date: Date
+) {
+  return date.toLocaleDateString(
+    "en-US",
+    {
+      weekday: "long",
+    }
+  );
+}
 
 export default function CalendarPage() {
-  const [employees, setEmployees] =
-    useState<Employee[]>([]);
+  const [
+    currentWeekStart,
+    setCurrentWeekStart,
+  ] = useState(() =>
+    getMonday(new Date())
+  );
 
-  const [crews, setCrews] =
-    useState<Crew[]>([]);
+  const [
+    employees,
+    setEmployees,
+  ] = useState<Employee[]>([]);
 
-  const [vehicles, setVehicles] =
-    useState<Vehicle[]>([]);
+  const [
+    crews,
+    setCrews,
+  ] = useState<Crew[]>([]);
 
-  const [schedules, setSchedules] =
-    useState<Schedule[]>([]);
+  const [
+    vehicles,
+    setVehicles,
+  ] = useState<Vehicle[]>([]);
 
-  const [selectedCrew, setSelectedCrew] =
-    useState("");
+  const [
+    schedules,
+    setSchedules,
+  ] = useState<Schedule[]>([]);
 
-  const [selectedDay, setSelectedDay] =
-    useState("");
+  const [
+    selectedCrew,
+    setSelectedCrew,
+  ] = useState("");
 
-  const [isScheduleModalOpen, setIsScheduleModalOpen] =
-    useState(false);
+  const [
+    selectedDay,
+    setSelectedDay,
+  ] = useState("");
 
-  const [editingSchedule, setEditingSchedule] =
-    useState<Schedule | null>(null);
+  const [
+    isScheduleModalOpen,
+    setIsScheduleModalOpen,
+  ] = useState(false);
 
-  const [scheduleError, setScheduleError] =
-    useState("");
+  const [
+    editingSchedule,
+    setEditingSchedule,
+  ] = useState<Schedule | null>(
+    null
+  );
 
-  useEffect(() => {
-    const loadCalendarResources = async () => {
+  const [
+    scheduleError,
+    setScheduleError,
+  ] = useState("");
+
+  const [
+    isLoading,
+    setIsLoading,
+  ] = useState(true);
+
+  const [
+    isSaving,
+    setIsSaving,
+  ] = useState(false);
+
+  const weekDays = useMemo(() => {
+    return dayNames.map(
+      (dayName, index) => {
+        const date =
+          new Date(currentWeekStart);
+
+        date.setDate(
+          currentWeekStart.getDate() +
+            index
+        );
+
+        return {
+          name: dayName,
+          date,
+          dateString:
+            formatDateForDatabase(
+              date
+            ),
+          displayDate:
+            formatDisplayDate(date),
+        };
+      }
+    );
+  }, [currentWeekStart]);
+
+  const loadCalendarData =
+    async () => {
       try {
+        setIsLoading(true);
+
         const [
           employeeData,
           vehicleData,
           crewData,
+          scheduledJobs,
         ] = await Promise.all([
           getActiveEmployees(),
           getActiveVehicles(),
           getCrews(),
+          getScheduledJobs(),
         ]);
 
-        setEmployees(employeeData);
-        setVehicles(vehicleData);
-        setCrews(crewData);
+        setEmployees(
+          employeeData
+        );
+
+        setVehicles(
+          vehicleData
+        );
+
+        setCrews(
+          crewData
+        );
+
+        const mappedSchedules =
+          scheduledJobs.map(
+            (
+              job: ScheduledJobRecord
+            ) => {
+              const date =
+                new Date(
+                  `${job.scheduledDate}T00:00:00`
+                );
+
+              return {
+                id: job.id,
+                workOrder:
+                  job.workOrder,
+                address:
+                  job.jobName,
+                crewId:
+                  job.crewId,
+                day:
+                  getDayName(date),
+                date:
+                  job.scheduledDate,
+                startTime:
+                  job.startTime,
+                endTime:
+                  job.endTime,
+              };
+            }
+          );
+
+        setSchedules(
+          mappedSchedules
+        );
       } catch (error) {
         console.error(
-          "Unable to load calendar resources:",
+          "Unable to load calendar data:",
           error
         );
+
+        setScheduleError(
+          "Unable to load calendar data."
+        );
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    loadCalendarResources();
+  useEffect(() => {
+    loadCalendarData();
   }, []);
 
-  const handleCreateSchedule = async (
-    schedule: ScheduleInput
-  ) => {
-    setScheduleError("");
+  const goToPreviousWeek =
+    () => {
+      setCurrentWeekStart(
+        (current) => {
+          const next =
+            new Date(current);
 
-    const crewResources =
-      await getCrewResources(
-        schedule.crewId
+          next.setDate(
+            next.getDate() - 7
+          );
+
+          return next;
+        }
       );
-
-    if (!crewResources) {
-      setScheduleError(
-        "Unable to find the selected crew."
-      );
-      return;
-    }
-
-    const date = dayDates[schedule.day];
-
-    if (!date) {
-      setScheduleError(
-        "Unable to determine the selected date."
-      );
-      return;
-    }
-
-    const employeeNames =
-      Object.fromEntries(
-        employees.map((employee) => [
-          employee.id,
-          employee.name,
-        ])
-      );
-
-    const vehicleNames =
-      Object.fromEntries(
-        vehicles.map((vehicle) => [
-          vehicle.id,
-          vehicle.name,
-        ])
-      );
-
-    const newJob: ScheduledJob = {
-      id:
-        schedule.id ??
-        crypto.randomUUID(),
-
-      jobNumber:
-        schedule.workOrder,
-
-      jobName:
-        schedule.address,
-
-      date,
-
-      startTime:
-        schedule.startTime,
-
-      endTime:
-        schedule.endTime,
-
-      crewId:
-        crewResources.crewId,
-
-      crewName:
-        crewResources.crewName,
-
-      employeeIds:
-        crewResources.employeeIds,
-
-      vehicleIds:
-        crewResources.vehicleIds,
     };
 
-    const existingJobs: ScheduledJob[] =
-      await Promise.all(
-        schedules.map(
-          async (existing) => {
-            const resources =
-              await getCrewResources(
-                existing.crewId
-              );
+  const goToNextWeek =
+    () => {
+      setCurrentWeekStart(
+        (current) => {
+          const next =
+            new Date(current);
 
-            return {
-              id: existing.id,
+          next.setDate(
+            next.getDate() + 7
+          );
 
-              jobNumber:
-                existing.workOrder,
+          return next;
+        }
+      );
+    };
+
+  const goToCurrentWeek =
+    () => {
+      setCurrentWeekStart(
+        getMonday(new Date())
+      );
+    };
+
+  const handleCreateSchedule =
+    async (
+      schedule: ScheduleInput
+    ) => {
+      try {
+        setIsSaving(true);
+        setScheduleError("");
+
+        const crewResources =
+          await getCrewResources(
+            schedule.crewId
+          );
+
+        if (!crewResources) {
+          setScheduleError(
+            "Unable to find the selected crew."
+          );
+
+          return;
+        }
+
+        const date =
+          schedule.date ||
+          weekDays.find(
+            (day) =>
+              day.name ===
+              schedule.day
+          )?.dateString;
+
+        if (!date) {
+          setScheduleError(
+            "Unable to determine the selected date."
+          );
+
+          return;
+        }
+
+        const employeeNames =
+          Object.fromEntries(
+            employees.map(
+              (employee) => [
+                employee.id,
+                employee.name,
+              ]
+            )
+          );
+
+        const vehicleNames =
+          Object.fromEntries(
+            vehicles.map(
+              (vehicle) => [
+                vehicle.id,
+                vehicle.name,
+              ]
+            )
+          );
+
+        const newJob: ScheduledJob = {
+          id:
+            schedule.id ??
+            crypto.randomUUID(),
+
+          jobNumber:
+            schedule.workOrder,
+
+          jobName:
+            schedule.address,
+
+          date,
+
+          startTime:
+            schedule.startTime,
+
+          endTime:
+            schedule.endTime,
+
+          crewId:
+            crewResources.crewId,
+
+          crewName:
+            crewResources.crewName,
+
+          employeeIds:
+            crewResources.employeeIds,
+
+          vehicleIds:
+            crewResources.vehicleIds,
+        };
+
+        const existingJobs =
+          await Promise.all(
+            schedules
+              .filter(
+                (existing) =>
+                  existing.id !==
+                  schedule.id
+              )
+              .map(
+                async (
+                  existing
+                ) => {
+                  const resources =
+                    await getCrewResources(
+                      existing.crewId
+                    );
+
+                  return {
+                    id:
+                      existing.id,
+
+                    jobNumber:
+                      existing.workOrder,
+
+                    jobName:
+                      existing.address,
+
+                    date:
+                      existing.date,
+
+                    startTime:
+                      existing.startTime,
+
+                    endTime:
+                      existing.endTime,
+
+                    crewId:
+                      existing.crewId,
+
+                    crewName:
+                      resources?.crewName ??
+                      "Unknown Crew",
+
+                    employeeIds:
+                      resources?.employeeIds ??
+                      [],
+
+                    vehicleIds:
+                      resources?.vehicleIds ??
+                      [],
+                  };
+                }
+              )
+          );
+
+        const conflicts =
+          findSchedulingConflicts(
+            newJob,
+            existingJobs,
+            employeeNames,
+            vehicleNames
+          );
+
+        if (
+          conflicts.length > 0
+        ) {
+          const conflictMessages =
+            conflicts.map(
+              (conflict) => {
+                const conflictType =
+                  conflict.type ===
+                  "crew"
+                    ? "Crew"
+                    : conflict.type ===
+                        "employee"
+                    ? "Employee"
+                    : "Vehicle";
+
+                return `${conflictType}: ${conflict.resourceName} is already assigned to ${conflict.conflictingJob.jobNumber} from ${conflict.conflictingJob.startTime} to ${conflict.conflictingJob.endTime}.`;
+              }
+            );
+
+          setScheduleError(
+            `Scheduling conflict:\n${conflictMessages.join(
+              "\n"
+            )}`
+          );
+
+          return;
+        }
+
+        if (schedule.id) {
+          await updateScheduledJob(
+            schedule.id,
+            {
+              workOrder:
+                schedule.workOrder,
 
               jobName:
-                existing.address,
+                schedule.address,
 
-              date:
-                dayDates[
-                  existing.day
-                ],
+              scheduledDate:
+                date,
 
               startTime:
-                existing.startTime,
+                schedule.startTime,
 
               endTime:
-                existing.endTime,
+                schedule.endTime,
 
               crewId:
-                existing.crewId,
+                crewResources.crewId,
 
               crewName:
-                resources?.crewName ??
-                "Unknown Crew",
+                crewResources.crewName,
 
               employeeIds:
-                resources?.employeeIds ??
-                [],
+                crewResources.employeeIds,
 
               vehicleIds:
-                resources?.vehicleIds ??
-                [],
-            };
-          }
-        )
-      );
+                crewResources.vehicleIds,
+            }
+          );
+        } else {
+          await createScheduledJob(
+            {
+              workOrder:
+                schedule.workOrder,
 
-    const conflicts =
-      findSchedulingConflicts(
-        newJob,
-        existingJobs,
-        employeeNames,
-        vehicleNames
-      );
+              jobName:
+                schedule.address,
 
-    if (conflicts.length > 0) {
-      const conflictMessages =
-        conflicts.map(
-          (conflict) => {
-            const conflictType =
-              conflict.type === "crew"
-                ? "Crew"
-                : conflict.type ===
-                    "employee"
-                  ? "Employee"
-                  : "Vehicle";
+              scheduledDate:
+                date,
 
-            return `${conflictType}: ${conflict.resourceName} is already assigned to ${conflict.conflictingJob.jobNumber} from ${conflict.conflictingJob.startTime} to ${conflict.conflictingJob.endTime}.`;
-          }
-        );
+              startTime:
+                schedule.startTime,
 
-      setScheduleError(
-        `Scheduling conflict:\n${conflictMessages.join(
-          "\n"
-        )}`
-      );
+              endTime:
+                schedule.endTime,
 
-      return;
-    }
+              crewId:
+                crewResources.crewId,
 
-    const savedSchedule: Schedule = {
-      id:
-        schedule.id ??
-        crypto.randomUUID(),
+              crewName:
+                crewResources.crewName,
 
-      workOrder:
-        schedule.workOrder,
+              employeeIds:
+                crewResources.employeeIds,
 
-      address:
-        schedule.address,
-
-      crewId:
-        schedule.crewId,
-
-      day:
-        schedule.day,
-
-      startTime:
-        schedule.startTime,
-
-      endTime:
-        schedule.endTime,
-    };
-
-    setSchedules(
-      (current) => {
-        if (schedule.id) {
-          return current.map(
-            (item) =>
-              item.id === schedule.id
-                ? savedSchedule
-                : item
+              vehicleIds:
+                crewResources.vehicleIds,
+            }
           );
         }
 
-        return [
-          ...current,
-          savedSchedule,
-        ];
+        await loadCalendarData();
+
+        setIsScheduleModalOpen(
+          false
+        );
+
+        setEditingSchedule(
+          null
+        );
+
+        setSelectedCrew("");
+
+        setSelectedDay("");
+
+        setScheduleError("");
+      } catch (error) {
+        console.error(
+          "Unable to save schedule:",
+          error
+        );
+
+        setScheduleError(
+          "Unable to save the schedule."
+        );
+      } finally {
+        setIsSaving(false);
       }
-    );
+    };
 
-    setIsScheduleModalOpen(false);
-  };
+  const openScheduleModal =
+    () => {
+      setEditingSchedule(null);
 
-  const openScheduleModal = () => {
-    setEditingSchedule(null);
-    setSelectedCrew("");
-    setSelectedDay("");
-    setScheduleError("");
-    setIsScheduleModalOpen(true);
-  };
+      setSelectedCrew("");
 
-  const handleCrewDrop = (
-    crewId: string,
-    day: string
-  ) => {
-    setEditingSchedule(null);
-    setSelectedCrew(crewId);
-    setSelectedDay(day);
-    setScheduleError("");
-    setIsScheduleModalOpen(true);
-  };
+      setSelectedDay(
+        weekDays[0]?.name ?? ""
+      );
 
-  const handleEditSchedule = (
-    schedule: Schedule
-  ) => {
-    setEditingSchedule(schedule);
-    setSelectedCrew(
-      schedule.crewId
-    );
-    setSelectedDay(
-      schedule.day
-    );
-    setScheduleError("");
-    setIsScheduleModalOpen(true);
-  };
+      setScheduleError("");
 
-  const handleDeleteSchedule = (
-    scheduleId: string
-  ) => {
-    setSchedules(
-      (current) =>
-        current.filter(
-          (schedule) =>
-            schedule.id !==
-            scheduleId
-        )
-    );
-  };
+      setIsScheduleModalOpen(
+        true
+      );
+    };
+
+  const handleCrewDrop =
+    (
+      crewId: string,
+      day: string
+    ) => {
+      setEditingSchedule(null);
+
+      setSelectedCrew(
+        crewId
+      );
+
+      setSelectedDay(day);
+
+      setScheduleError("");
+
+      setIsScheduleModalOpen(
+        true
+      );
+    };
+
+  const handleEditSchedule =
+    (
+      schedule: Schedule
+    ) => {
+      setEditingSchedule(
+        schedule
+      );
+
+      setSelectedCrew(
+        schedule.crewId
+      );
+
+      setSelectedDay(
+        schedule.day
+      );
+
+      setScheduleError("");
+
+      setIsScheduleModalOpen(
+        true
+      );
+    };
+
+  const handleDeleteSchedule =
+    async (
+      scheduleId: string
+    ) => {
+      try {
+        setScheduleError("");
+
+        await deleteScheduledJob(
+          scheduleId
+        );
+
+        setSchedules(
+          (current) =>
+            current.filter(
+              (schedule) =>
+                schedule.id !==
+                scheduleId
+            )
+        );
+      } catch (error) {
+        console.error(
+          "Unable to delete schedule:",
+          error
+        );
+
+        setScheduleError(
+          "Unable to delete the schedule."
+        );
+      }
+    };
 
   return (
-    <>
+  <>
+    <div>
       {/* Page Header */}
 
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-brand-blue">
+          <h2 className="text-2xl font-bold text-brand-blue">
             Operations Calendar
-          </h1>
+          </h2>
 
           <p className="text-gray-600 mt-1">
-            Schedule work, assign crews, and manage
-            daily operations.
+            Schedule work, assign crews, and manage daily operations.
           </p>
         </div>
 
@@ -395,37 +722,65 @@ export default function CalendarPage() {
         </button>
       </div>
 
-      <CalendarHeader />
+      {/* Calendar Header */}
 
-      <div className="grid xl:grid-cols-[240px_1fr] gap-6 mt-6">
-        <CrewPanel
-          crews={crews}
-          onCrewSelect={setSelectedCrew}
-          onDaySelect={setSelectedDay}
-        />
-
-        <CalendarGrid
-          schedules={schedules}
-          crews={crews}
-          onCrewDrop={handleCrewDrop}
-          onEditSchedule={handleEditSchedule}
-          onDeleteSchedule={handleDeleteSchedule}
-        />
-      </div>
-
-      <ScheduleModal
-        isOpen={isScheduleModalOpen}
-        onClose={() => {
-          setScheduleError("");
-          setIsScheduleModalOpen(false);
-        }}
-        onCreate={handleCreateSchedule}
-        selectedCrew={selectedCrew}
-        selectedDay={selectedDay}
-        editingSchedule={editingSchedule}
-        scheduleError={scheduleError}
-        crews={crews}
+      <CalendarHeader
+        weekDays={weekDays}
+        onPreviousWeek={goToPreviousWeek}
+        onNextWeek={goToNextWeek}
+        onToday={goToCurrentWeek}
       />
-    </>
-  );
+
+      {/* Calendar */}
+
+      {isLoading ? (
+        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center mt-6">
+          <p className="text-gray-500">
+            Loading calendar...
+          </p>
+        </div>
+      ) : (
+        <div className="grid xl:grid-cols-[240px_1fr] gap-6 mt-6">
+          <CrewPanel
+            crews={crews}
+            onCrewSelect={setSelectedCrew}
+            onDaySelect={setSelectedDay}
+          />
+
+          <CalendarGrid
+            schedules={schedules.filter((schedule) =>
+              weekDays.some(
+                (day) =>
+                  day.dateString === schedule.date
+              )
+            )}
+            crews={crews}
+            weekDays={weekDays}
+            onCrewDrop={handleCrewDrop}
+            onEditSchedule={handleEditSchedule}
+            onDeleteSchedule={handleDeleteSchedule}
+          />
+        </div>
+      )}
+    </div>
+
+    {/* Schedule Modal */}
+
+    <ScheduleModal
+      isOpen={isScheduleModalOpen}
+      onClose={() => {
+        setScheduleError("");
+        setIsScheduleModalOpen(false);
+      }}
+      onCreate={handleCreateSchedule}
+      selectedCrew={selectedCrew}
+      selectedDay={selectedDay}
+      editingSchedule={editingSchedule}
+      scheduleError={scheduleError}
+      crews={crews}
+      weekDays={weekDays}
+      isSaving={isSaving}
+    />
+  </>
+);
 }
