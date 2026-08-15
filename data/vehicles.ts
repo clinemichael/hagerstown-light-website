@@ -75,3 +75,48 @@ export async function createVehicle(
 
   return data;
 }
+
+export async function updateVehicle(
+  vehicle: Vehicle
+): Promise<Vehicle> {
+  const { error } = await supabase
+    .from("vehicles")
+    .update({
+      name: vehicle.name,
+      type: vehicle.type,
+      mileage: vehicle.mileage,
+      maintenance: vehicle.maintenance,
+      active: vehicle.active,
+    })
+    .eq("id", vehicle.id);
+
+  if (error) {
+    console.error(
+      "Unable to update vehicle:",
+      error
+    );
+
+    throw new Error(error.message);
+  }
+
+  return vehicle;
+}
+export async function deactivateVehicle(
+  vehicleId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("vehicles")
+    .update({
+      active: false,
+    })
+    .eq("id", vehicleId);
+
+  if (error) {
+    console.error(
+      "Unable to deactivate vehicle:",
+      error
+    );
+
+    throw new Error(error.message);
+  }
+}

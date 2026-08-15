@@ -11,7 +11,7 @@ import {
 import { useEffect, useState } from "react";
 
 import {
-  getVehicles,
+  getActiveVehicles,
   createVehicle,
   type Vehicle,
 } from "@/data/vehicles";
@@ -37,7 +37,7 @@ export default function FleetPage() {
       setLoading(true);
       setError("");
 
-      const vehicleData = await getVehicles();
+      const vehicleData = await getActiveVehicles();
 
       setVehicles(vehicleData);
     } catch (error) {
