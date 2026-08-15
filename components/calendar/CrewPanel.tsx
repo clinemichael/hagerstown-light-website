@@ -5,12 +5,12 @@ import {
   CircleCheck,
   Clock,
   UserCheck,
-  Users,
 } from "lucide-react";
 
-import { crews } from "@/data/crews";
+import type { Crew } from "@/data/crews";
 
 type CrewPanelProps = {
+  crews: Crew[];
   onCrewSelect: (crew: string) => void;
   onDaySelect: (day: string) => void;
 };
@@ -81,6 +81,7 @@ const getStatusClass = (status: string) => {
 };
 
 export default function CrewPanel({
+  crews,
   onCrewSelect,
 }: CrewPanelProps) {
   const handleDragStart = (
@@ -94,11 +95,11 @@ export default function CrewPanel({
   };
 
   return (
-    <div>
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <Users
-          size={22}
+        <UserCheck
+          size={20}
           className="text-brand-blue"
         />
 
@@ -144,8 +145,8 @@ export default function CrewPanel({
             </div>
 
             <p className="text-sm text-gray-500 mt-1">
-  {crew.memberIds.length + 1} members
-</p>
+              {crew.memberIds.length + 1} members
+            </p>
 
             <p
               className={`text-xs font-medium mt-1 ${getStatusClass(

@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabase";
+
 export type CrewStatus =
   | "Available"
   | "Assigned"
@@ -15,32 +17,74 @@ export type Crew = {
   assignment: string;
 };
 
-export const crews = [
-  {
-    id: "crew-001",
-    name: "Line Crew 1",
-    leadId: "1001",
-    memberIds: ["1002", "1003"],
-    vehicleIds: ["T-12", "T-18"],
-    status: "On Leave",
-    assignment: "No current assignment",
-  },
-  {
-    id: "crew-002",
-    name: "Line Crew 2",
-    leadId: "1004",
-    memberIds: ["1005"],
-    vehicleIds: ["T-21", "T-24", "T-26"],
-    status: "Available",
-    assignment: "No current assignment",
-  },
-  {
-    id: "crew-003",
-    name: "Service Crew",
-    leadId: "1005",
-    memberIds: ["1003"],
-    vehicleIds: ["ST-01"],
-    status: "Available",
-    assignment: "No current assignment",
-  },
-] satisfies Crew[];
+export async function getCrews(): Promise<Crew[]> {
+  const { data: crewData, error: crewError } =
+    await supabase
+      .from("crews")
+      .select("*")
+      .order("id");
+
+  if (crewError) {
+    console.error(
+      "Unable to load crews:",
+      crewError
+    );
+    throw new Error(crewError.message);
+  }
+
+  if (!crewData) {
+    return [];
+  }
+
+  const { data: memberData, error: memberError } =
+    await supabase
+      .from("crew_members")
+      .select("crew_id, employee_id");
+
+  if (memberError) {
+    console.error(
+      "Unable to load crew members:",
+      memberError
+    );
+    throw new Error(memberError.message);
+  }
+
+  const { data: vehicleData, error: vehicleError } =
+    await supabase
+      .from("crew_vehicles")
+      .select("crew_id, vehicle_id");
+
+  if (vehicleError) {
+    console.error(
+      "Unable to load crew vehicles:",
+      vehicleError
+    );
+    throw new Error(vehicleError.message);
+  }
+
+  return crewData.map((crew) => {
+    const members =
+      memberData?.filter(
+        (item) => item.crew_id === crew.id
+      ) ?? [];
+
+    const vehicles =
+      vehicleData?.filter(
+        (item) => item.crew_id === crew.id
+      ) ?? [];
+
+    return {
+      id: crew.id,
+      name: crew.name,
+      leadId: crew.lead_id,
+      memberIds: members.map(
+        (item) => item.employee_id
+      ),
+      vehicleIds: vehicles.map(
+        (item) => item.vehicle_id
+      ),
+      status: crew.status as CrewStatus,
+      assignment: crew.assignment,
+    };
+  });
+}

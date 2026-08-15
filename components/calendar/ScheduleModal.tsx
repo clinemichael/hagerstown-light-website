@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { crews } from "@/data/crews";
+import type { Crew } from "@/data/crews";
 
 type Schedule = {
   id?: string;
@@ -23,6 +23,7 @@ type ScheduleModalProps = {
   selectedDay: string;
   editingSchedule?: Schedule | null;
   scheduleError?: string;
+  crews: Crew[];
 };
 
 const days = [
@@ -43,6 +44,7 @@ export default function ScheduleModal({
   selectedDay,
   editingSchedule,
   scheduleError,
+  crews,
 }: ScheduleModalProps) {
   const [workOrder, setWorkOrder] = useState("");
   const [address, setAddress] = useState("");
@@ -84,17 +86,21 @@ export default function ScheduleModal({
   }
 
   const handleSubmit = (
-    event: React.FormEvent<HTMLFormElement>
+    event: React.FormEvent
   ) => {
     event.preventDefault();
 
     if (!workOrder.trim()) {
-      setError("Please enter a work order number.");
+      setError(
+        "Please enter a work order number."
+      );
       return;
     }
 
     if (!address.trim()) {
-      setError("Please enter the work location.");
+      setError(
+        "Please enter the work location."
+      );
       return;
     }
 
@@ -124,7 +130,6 @@ export default function ScheduleModal({
       startTime,
       endTime,
     });
-
   };
 
   const isEditing = Boolean(editingSchedule);
@@ -142,21 +147,14 @@ export default function ScheduleModal({
         p-4
       "
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
+        if (
+          event.target === event.currentTarget
+        ) {
           onClose();
         }
       }}
     >
-      <div
-        className="
-          w-full
-          max-w-lg
-          bg-white
-          rounded-2xl
-          shadow-xl
-          p-6
-        "
-      >
+      <div className="w-full max-w-lg bg-white rounded-xl shadow-xl p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -203,7 +201,9 @@ export default function ScheduleModal({
               type="text"
               value={workOrder}
               onChange={(event) => {
-                setWorkOrder(event.target.value);
+                setWorkOrder(
+                  event.target.value
+                );
                 setError("");
               }}
               placeholder="WO-1024"
@@ -231,7 +231,9 @@ export default function ScheduleModal({
               type="text"
               value={address}
               onChange={(event) => {
-                setAddress(event.target.value);
+                setAddress(
+                  event.target.value
+                );
                 setError("");
               }}
               placeholder="123 Main Street"
@@ -258,7 +260,9 @@ export default function ScheduleModal({
             <select
               value={crewId}
               onChange={(event) => {
-                setCrewId(event.target.value);
+                setCrewId(
+                  event.target.value
+                );
                 setError("");
               }}
               className="
@@ -298,7 +302,9 @@ export default function ScheduleModal({
             <select
               value={day}
               onChange={(event) => {
-                setDay(event.target.value);
+                setDay(
+                  event.target.value
+                );
                 setError("");
               }}
               className="
@@ -336,7 +342,9 @@ export default function ScheduleModal({
                 type="time"
                 value={startTime}
                 onChange={(event) => {
-                  setStartTime(event.target.value);
+                  setStartTime(
+                    event.target.value
+                  );
                   setError("");
                 }}
                 className="
@@ -362,7 +370,9 @@ export default function ScheduleModal({
                 type="time"
                 value={endTime}
                 onChange={(event) => {
-                  setEndTime(event.target.value);
+                  setEndTime(
+                    event.target.value
+                  );
                   setError("");
                 }}
                 className="
@@ -390,12 +400,12 @@ export default function ScheduleModal({
           )}
 
           {scheduleError && (
-  <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2">
-    <p className="text-sm font-medium text-red-700 whitespace-pre-line">
-      ⚠️ {scheduleError}
-    </p>
-  </div>
-)}
+            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2">
+              <p className="text-sm text-red-700">
+                {scheduleError}
+              </p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-3">

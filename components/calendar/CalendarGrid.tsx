@@ -1,8 +1,7 @@
 "use client";
 
 import type { DragEvent } from "react";
-
-import { crews } from "@/data/crews";
+import type { Crew } from "@/data/crews";
 
 type Schedule = {
   id: string;
@@ -16,6 +15,7 @@ type Schedule = {
 
 type CalendarGridProps = {
   schedules: Schedule[];
+  crews: Crew[];
   onCrewDrop: (crewId: string, day: string) => void;
   onEditSchedule: (schedule: Schedule) => void;
   onDeleteSchedule: (scheduleId: string) => void;
@@ -35,6 +35,7 @@ const dates = [10, 11, 12, 13, 14, 15, 16];
 
 export default function CalendarGrid({
   schedules,
+  crews,
   onCrewDrop,
   onEditSchedule,
   onDeleteSchedule,
@@ -45,7 +46,8 @@ export default function CalendarGrid({
   ) => {
     event.preventDefault();
 
-    const crewId = event.dataTransfer.getData("crewId");
+    const crewId =
+      event.dataTransfer.getData("crewId");
 
     if (!crewId) return;
 
@@ -61,20 +63,13 @@ export default function CalendarGrid({
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
       {/* Calendar Header */}
-      <div className="grid grid-cols-7 bg-gray-50">
+      <div className="grid grid-cols-7 border-b border-gray-200">
         {days.map((day, index) => (
           <div
             key={day}
-            className="
-              border-r
-              border-b
-              border-gray-200
-              p-3
-              text-center
-              last:border-r-0
-            "
+            className="text-center py-4 border-r border-gray-200 last:border-r-0"
           >
             <p className="text-sm font-semibold text-gray-600">
               {day}
@@ -91,10 +86,14 @@ export default function CalendarGrid({
       <div className="grid grid-cols-7 min-h-[500px]">
         {days.map((day) => {
           const daySchedules = schedules
-           .filter((schedule) => schedule.day === day)
-           .sort((a, b) =>
-            a.startTime.localeCompare(b.startTime)
-           );
+            .filter(
+              (schedule) => schedule.day === day
+            )
+            .sort((a, b) =>
+              a.startTime.localeCompare(
+                b.startTime
+              )
+            );
 
           return (
             <div
@@ -141,7 +140,9 @@ export default function CalendarGrid({
 
                     {/* Crew */}
                     <p className="text-xs font-medium text-gray-700 mt-1">
-                      {getCrewName(schedule.crewId)}
+                      {getCrewName(
+                        schedule.crewId
+                      )}
                     </p>
 
                     {/* Address */}
@@ -169,7 +170,9 @@ export default function CalendarGrid({
                       <button
                         type="button"
                         onClick={() =>
-                          onDeleteSchedule(schedule.id)
+                          onDeleteSchedule(
+                            schedule.id
+                          )
                         }
                         className="
                           text-xs

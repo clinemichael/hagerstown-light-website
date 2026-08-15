@@ -7,10 +7,17 @@ import {
   CalendarDays,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { vehicles } from "@/data/vehicles";
-import { crews } from "@/data/crews";
+import {
+  getVehicles,
+  type Vehicle,
+} from "@/data/vehicles";
+
+import {
+  getCrews,
+  type Crew,
+} from "@/data/crews";
 
 import {
   vehicleOperations,
@@ -18,8 +25,36 @@ import {
 } from "@/data/vehicleOperations";
 
 export default function FleetPage() {
+  const [vehicles, setVehicles] =
+    useState<Vehicle[]>([]);
+
+  const [crews, setCrews] =
+    useState<Crew[]>([]);
+
   const [assignments, setAssignments] =
     useState(vehicleOperations);
+
+  useEffect(() => {
+    const loadFleetData = async () => {
+      try {
+        const [vehicleData, crewData] =
+          await Promise.all([
+            getVehicles(),
+            getCrews(),
+          ]);
+
+        setVehicles(vehicleData);
+        setCrews(crewData);
+      } catch (error) {
+        console.error(
+          "Unable to load fleet data:",
+          error
+        );
+      }
+    };
+
+    loadFleetData();
+  }, []);
 
   const updateStatus = (
     vehicleId: string,

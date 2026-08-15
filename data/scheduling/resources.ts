@@ -1,8 +1,12 @@
-import { crews } from "@/data/crews";
-import { employees } from "@/data/employees";
-import { vehicles } from "@/data/vehicles";
+import { getCrews } from "@/data/crews";
+import { getActiveEmployees } from "@/data/employees";
+import { getActiveVehicles } from "@/data/vehicles";
 
-export function getCrewResources(crewId: string) {
+export async function getCrewResources(crewId: string) {
+  const crews = await getCrews();
+  const employees = await getActiveEmployees();
+  const vehicles = await getActiveVehicles();
+
   const crew = crews.find((item) => item.id === crewId);
 
   if (!crew) {
