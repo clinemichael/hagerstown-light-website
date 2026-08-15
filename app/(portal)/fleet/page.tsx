@@ -1,127 +1,116 @@
 "use client";
 
 import {
+  Search,
+  Plus,
   Truck,
-  Users,
   Wrench,
-  CalendarDays,
+  X,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
 
 import {
   getVehicles,
+  createVehicle,
   type Vehicle,
 } from "@/data/vehicles";
 
-import {
-  getCrews,
-  type Crew,
-} from "@/data/crews";
-
-import {
-  vehicleOperations,
-  type VehicleStatus,
-} from "@/data/vehicleOperations";
-
 export default function FleetPage() {
-  const [vehicles, setVehicles] =
-    useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showAddVehicle, setShowAddVehicle] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const [crews, setCrews] =
-    useState<Crew[]>([]);
+  const [newVehicle, setNewVehicle] = useState({
+    id: "",
+    name: "",
+    type: "",
+    mileage: "",
+    maintenance: "",
+  });
 
-  const [assignments, setAssignments] =
-    useState(vehicleOperations);
+  const loadVehicles = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const vehicleData = await getVehicles();
+
+      setVehicles(vehicleData);
+    } catch (error) {
+      console.error("Unable to load vehicles:", error);
+
+      setError("Unable to load vehicles.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadFleetData = async () => {
-      try {
-        const [
-          vehicleData,
-          crewData,
-        ] = await Promise.all([
-          getVehicles(),
-          getCrews(),
-        ]);
-
-        setVehicles(vehicleData);
-        setCrews(crewData);
-      } catch (error) {
-        console.error(
-          "Unable to load fleet data:",
-          error
-        );
-      }
-    };
-
-    loadFleetData();
+    loadVehicles();
   }, []);
 
-  const updateStatus = (
-    vehicleId: string,
-    status: VehicleStatus
-  ) => {
-    setAssignments((current) =>
-      current.map((item) =>
-        item.vehicleId === vehicleId
-          ? {
-              ...item,
-              status,
-            }
-          : item
-      )
+  const filteredVehicles = vehicles.filter((vehicle) => {
+    const search = searchTerm.toLowerCase();
+
+    return (
+      vehicle.id.toLowerCase().includes(search) ||
+      vehicle.name.toLowerCase().includes(search) ||
+      vehicle.type.toLowerCase().includes(search)
     );
-  };
+  });
 
-  const updateCrew = (
-    vehicleId: string,
-    crewId: string
+  const handleAddVehicle = async (
+    event: React.FormEvent<HTMLFormElement>
   ) => {
-    setAssignments((current) =>
-      current.map((item) =>
-        item.vehicleId === vehicleId
-          ? {
-              ...item,
-              crewId,
-              status:
-                crewId &&
-                item.status === "Available"
-                  ? "Assigned"
-                  : item.status,
-            }
-          : item
-      )
-    );
-  };
+    event.preventDefault();
 
-  const getCrew = (
-    crewId: string
-  ) => {
-    return crews.find(
-      (crew) =>
-        crew.id === crewId
-    );
-  };
+    if (
+      !newVehicle.id.trim() ||
+      !newVehicle.name.trim() ||
+      !newVehicle.type.trim()
+    ) {
+      setError("Vehicle ID, name, and type are required.");
+      return;
+    }
 
-  const getStatusClasses = (
-    status: VehicleStatus
-  ) => {
-    switch (status) {
-      case "Available":
-        return "bg-green-100 text-green-700";
+    try {
+      setSaving(true);
+      setError("");
 
-      case "Assigned":
-        return "bg-blue-100 text-blue-700";
+      await createVehicle({
+        id: newVehicle.id.trim(),
+        name: newVehicle.name.trim(),
+        type: newVehicle.type.trim(),
+        mileage: Number(newVehicle.mileage) || 0,
+        maintenance: newVehicle.maintenance.trim(),
+        active: true,
+      });
 
-      case "Maintenance":
-        return "bg-yellow-100 text-yellow-700";
+      setNewVehicle({
+        id: "",
+        name: "",
+        type: "",
+        mileage: "",
+        maintenance: "",
+      });
 
-      case "Out of Service":
-        return "bg-red-100 text-red-700";
+      setShowAddVehicle(false);
 
-      default:
-        return "bg-gray-100 text-gray-700";
+      await loadVehicles();
+    } catch (error) {
+      console.error("Unable to add vehicle:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to add vehicle."
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -132,340 +121,577 @@ export default function FleetPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-bold text-brand-blue">
-            Operations Fleet
+            Fleet
           </h2>
 
           <p className="text-gray-600 mt-1">
-            Manage truck status and crew assignments.
+            View and add HLD fleet vehicles.
           </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setError("");
+            setShowAddVehicle(true);
+          }}
+          className="
+            flex
+            items-center
+            gap-2
+            rounded-lg
+            bg-brand-blue
+            px-4
+            py-2.5
+            text-sm
+            font-semibold
+            text-white
+            hover:opacity-90
+            transition
+          "
+        >
+          <Plus size={18} />
+
+          Add Vehicle
+        </button>
+      </div>
+
+      {/* Error */}
+
+      {error && (
+        <div
+          className="
+            mb-6
+            rounded-lg
+            border
+            border-red-200
+            bg-red-50
+            px-4
+            py-3
+            text-sm
+            text-red-700
+          "
+        >
+          {error}
+        </div>
+      )}
+
+      {/* Search */}
+
+      <div className="mb-6">
+        <div className="relative max-w-md">
+          <Search
+            size={18}
+            className="
+              absolute
+              left-3
+              top-1/2
+              -translate-y-1/2
+              text-gray-400
+            "
+          />
+
+          <input
+            type="text"
+            placeholder="Search vehicles..."
+            value={searchTerm}
+            onChange={(event) =>
+              setSearchTerm(event.target.value)
+            }
+            className="
+              w-full
+              rounded-lg
+              border
+              border-gray-200
+              bg-white
+              py-2.5
+              pl-10
+              pr-4
+              text-sm
+              outline-none
+              focus:border-brand-blue
+              focus:ring-2
+              focus:ring-blue-100
+            "
+          />
         </div>
       </div>
 
-      {/* Fleet Cards */}
+      {/* Vehicle Table */}
 
       <div
         className="
-          grid
-          sm:grid-cols-2
-          xl:grid-cols-3
-          2xl:grid-cols-4
-          gap-5
+          overflow-hidden
+          rounded-xl
+          border
+          border-gray-200
+          bg-white
+          shadow-sm
         "
       >
-        {vehicles.map((vehicle) => {
-          const assignment =
-            assignments.find(
-              (item) =>
-                item.vehicleId ===
-                vehicle.id
-            ) || {
-              vehicleId:
-                vehicle.id,
-              status:
-                "Available" as VehicleStatus,
-              crewId: "",
-            };
+        {loading ? (
+          <div className="p-8 text-center text-sm text-gray-500">
+            Loading vehicles...
+          </div>
+        ) : filteredVehicles.length === 0 ? (
+          <div className="p-8 text-center">
+            <Truck
+              size={32}
+              className="mx-auto mb-3 text-gray-300"
+            />
 
-          const crew =
-            getCrew(
-              assignment.crewId
-            );
+            <p className="font-medium text-gray-700">
+              No vehicles found
+            </p>
 
-          return (
-            <div
-              key={vehicle.id}
-              className="
-                bg-white
-                border
-                border-gray-200
-                rounded-xl
-                p-5
-                shadow-sm
-                hover:shadow-md
-                transition
-              "
-            >
-              {/* Vehicle Header */}
-
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
+            <p className="mt-1 text-sm text-gray-500">
+              Try a different search or add a new vehicle.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th
                     className="
-                      w-10
-                      h-10
-                      rounded-lg
-                      bg-blue-50
-                      flex
-                      items-center
-                      justify-center
+                      px-5
+                      py-3
+                      text-left
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      text-gray-500
                     "
                   >
-                    <Truck
-                      size={21}
-                      className="text-brand-blue"
-                    />
-                  </div>
+                    Vehicle ID
+                  </th>
 
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      {vehicle.name}
-                    </h3>
+                  <th
+                    className="
+                      px-5
+                      py-3
+                      text-left
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      text-gray-500
+                    "
+                  >
+                    Vehicle
+                  </th>
 
-                    <p className="text-sm text-gray-500">
+                  <th
+                    className="
+                      px-5
+                      py-3
+                      text-left
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      text-gray-500
+                    "
+                  >
+                    Type
+                  </th>
+
+                  <th
+                    className="
+                      px-5
+                      py-3
+                      text-left
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      text-gray-500
+                    "
+                  >
+                    Mileage
+                  </th>
+
+                  <th
+                    className="
+                      px-5
+                      py-3
+                      text-left
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      text-gray-500
+                    "
+                  >
+                    Next Maintenance
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredVehicles.map((vehicle) => (
+                  <tr
+                    key={vehicle.id}
+                    className="
+                      border-b
+                      border-gray-100
+                      last:border-b-0
+                      hover:bg-gray-50
+                    "
+                  >
+                    <td className="px-5 py-4">
+                      <span className="font-medium text-brand-blue">
+                        {vehicle.id}
+                      </span>
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="
+                            flex
+                            h-9
+                            w-9
+                            items-center
+                            justify-center
+                            rounded-lg
+                            bg-blue-50
+                          "
+                        >
+                          <Truck
+                            size={18}
+                            className="text-brand-blue"
+                          />
+                        </div>
+
+                        <span className="font-medium text-gray-800">
+                          {vehicle.name}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="px-5 py-4 text-sm text-gray-600">
                       {vehicle.type}
-                    </p>
+                    </td>
 
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      ID: {vehicle.id}
-                    </p>
-                  </div>
-                </div>
+                    <td className="px-5 py-4 text-sm text-gray-600">
+                      {vehicle.mileage.toLocaleString()} miles
+                    </td>
 
-                {/* Status */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <Wrench
+                          size={16}
+                          className="text-gray-400"
+                        />
 
-                <span
-                  className={`
-                    text-xs
-                    font-semibold
-                    px-2
-                    py-1
-                    rounded-full
-                    ${getStatusClasses(
-                      assignment.status
-                    )}
-                  `}
-                >
-                  {assignment.status}
-                </span>
+                        <span className="text-sm text-gray-600">
+                          {vehicle.maintenance || "Not scheduled"}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Add Vehicle Modal */}
+
+      {showAddVehicle && (
+        <div
+          className="
+            fixed
+            inset-0
+            z-50
+            flex
+            items-center
+            justify-center
+            bg-black/40
+            p-4
+          "
+        >
+          <div
+            className="
+              w-full
+              max-w-lg
+              rounded-xl
+              bg-white
+              shadow-xl
+            "
+          >
+            {/* Modal Header */}
+
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                border-b
+                border-gray-200
+                px-6
+                py-4
+              "
+            >
+              <div>
+                <h3 className="text-lg font-bold text-brand-blue">
+                  Add Vehicle
+                </h3>
+
+                <p className="mt-0.5 text-sm text-gray-500">
+                  Add a vehicle to the HLD fleet.
+                </p>
               </div>
 
-              {/* Vehicle Information */}
+              <button
+                type="button"
+                onClick={() => setShowAddVehicle(false)}
+                className="
+                  rounded-lg
+                  p-2
+                  text-gray-400
+                  hover:bg-gray-100
+                  hover:text-gray-600
+                "
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-              <div className="mt-5 space-y-4">
+            {/* Modal Form */}
+
+            <form
+              onSubmit={handleAddVehicle}
+              className="p-6"
+            >
+              <div className="grid gap-5 sm:grid-cols-2">
+                {/* Vehicle ID */}
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Vehicle ID
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newVehicle.id}
+                    onChange={(event) =>
+                      setNewVehicle((current) => ({
+                        ...current,
+                        id: event.target.value,
+                      }))
+                    }
+                    placeholder="T-30"
+                    className="
+                      w-full
+                      rounded-lg
+                      border
+                      border-gray-200
+                      px-3
+                      py-2.5
+                      text-sm
+                      outline-none
+                      focus:border-brand-blue
+                      focus:ring-2
+                      focus:ring-blue-100
+                    "
+                  />
+                </div>
+
+                {/* Vehicle Name */}
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Vehicle Name
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newVehicle.name}
+                    onChange={(event) =>
+                      setNewVehicle((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                    placeholder="Truck 30"
+                    className="
+                      w-full
+                      rounded-lg
+                      border
+                      border-gray-200
+                      px-3
+                      py-2.5
+                      text-sm
+                      outline-none
+                      focus:border-brand-blue
+                      focus:ring-2
+                      focus:ring-blue-100
+                    "
+                  />
+                </div>
+
+                {/* Vehicle Type */}
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Vehicle Type
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newVehicle.type}
+                    onChange={(event) =>
+                      setNewVehicle((current) => ({
+                        ...current,
+                        type: event.target.value,
+                      }))
+                    }
+                    placeholder="Bucket Truck"
+                    className="
+                      w-full
+                      rounded-lg
+                      border
+                      border-gray-200
+                      px-3
+                      py-2.5
+                      text-sm
+                      outline-none
+                      focus:border-brand-blue
+                      focus:ring-2
+                      focus:ring-blue-100
+                    "
+                  />
+                </div>
 
                 {/* Mileage */}
 
-                <div className="flex items-center gap-3">
-                  <Truck
-                    size={17}
-                    className="text-gray-400"
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Mileage
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    value={newVehicle.mileage}
+                    onChange={(event) =>
+                      setNewVehicle((current) => ({
+                        ...current,
+                        mileage: event.target.value,
+                      }))
+                    }
+                    placeholder="25000"
+                    className="
+                      w-full
+                      rounded-lg
+                      border
+                      border-gray-200
+                      px-3
+                      py-2.5
+                      text-sm
+                      outline-none
+                      focus:border-brand-blue
+                      focus:ring-2
+                      focus:ring-blue-100
+                    "
                   />
-
-                  <div>
-                    <p className="text-xs text-gray-500">
-                      Mileage
-                    </p>
-
-                    <p className="font-medium">
-                      {vehicle.mileage.toLocaleString()}{" "}
-                      miles
-                    </p>
-                  </div>
                 </div>
 
                 {/* Maintenance */}
 
-                <div className="flex items-center gap-3">
-                  <Wrench
-                    size={17}
-                    className="text-gray-400"
+                <div className="sm:col-span-2">
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Next Maintenance
+                  </label>
+
+                  <input
+                    type="text"
+                    value={newVehicle.maintenance}
+                    onChange={(event) =>
+                      setNewVehicle((current) => ({
+                        ...current,
+                        maintenance: event.target.value,
+                      }))
+                    }
+                    placeholder="2026-09-15"
+                    className="
+                      w-full
+                      rounded-lg
+                      border
+                      border-gray-200
+                      px-3
+                      py-2.5
+                      text-sm
+                      outline-none
+                      focus:border-brand-blue
+                      focus:ring-2
+                      focus:ring-blue-100
+                    "
                   />
-
-                  <div>
-                    <p className="text-xs text-gray-500">
-                      Next Maintenance
-                    </p>
-
-                    <p className="font-medium">
-                      {vehicle.maintenance}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Crew Assignment */}
-
-                <div className="flex items-center gap-3">
-                  <Users
-                    size={17}
-                    className="text-gray-400"
-                  />
-
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-500">
-                      Assigned Crew
-                    </p>
-
-                    <p className="font-medium">
-                      {crew?.name ||
-                        "No crew assigned"}
-                    </p>
-                  </div>
                 </div>
               </div>
 
-              {/* Status Control */}
+              {/* Buttons */}
 
-              <div className="mt-5">
-                <label className="block text-xs font-semibold text-gray-500 mb-2">
-                  Truck Status
-                </label>
-
-                <select
-                  value={
-                    assignment.status
-                  }
-                  onChange={(event) =>
-                    updateStatus(
-                      vehicle.id,
-                      event.target
-                        .value as VehicleStatus
-                    )
-                  }
+              <div
+                className="
+                  mt-6
+                  flex
+                  justify-end
+                  gap-3
+                  border-t
+                  border-gray-100
+                  pt-5
+                "
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowAddVehicle(false)}
                   className="
-                    w-full
+                    rounded-lg
                     border
                     border-gray-200
-                    rounded-lg
-                    px-3
-                    py-2
+                    px-4
+                    py-2.5
                     text-sm
-                    bg-white
-                    outline-none
-                    focus:ring-2
-                    focus:ring-blue-100
-                    focus:border-brand-blue
+                    font-semibold
+                    text-gray-600
+                    hover:bg-gray-50
                   "
                 >
-                  <option value="Available">
-                    Available
-                  </option>
+                  Cancel
+                </button>
 
-                  <option value="Assigned">
-                    Assigned
-                  </option>
-
-                  <option value="Maintenance">
-                    Maintenance
-                  </option>
-
-                  <option value="Out of Service">
-                    Out of Service
-                  </option>
-                </select>
-              </div>
-
-              {/* Crew Assignment Control */}
-
-              <div className="mt-4">
-                <label className="block text-xs font-semibold text-gray-500 mb-2">
-                  Assign Crew
-                </label>
-
-                <select
-                  value={
-                    assignment.crewId
-                  }
-                  onChange={(event) =>
-                    updateCrew(
-                      vehicle.id,
-                      event.target.value
-                    )
-                  }
+                <button
+                  type="submit"
+                  disabled={saving}
                   className="
-                    w-full
-                    border
-                    border-gray-200
                     rounded-lg
-                    px-3
-                    py-2
+                    bg-brand-blue
+                    px-4
+                    py-2.5
                     text-sm
-                    bg-white
-                    outline-none
-                    focus:ring-2
-                    focus:ring-blue-100
-                    focus:border-brand-blue
+                    font-semibold
+                    text-white
+                    hover:opacity-90
+                    disabled:cursor-not-allowed
+                    disabled:opacity-60
                   "
                 >
-                  <option value="">
-                    No crew assigned
-                  </option>
-
-                  {crews.map(
-                    (crew) => (
-                      <option
-                        key={crew.id}
-                        value={crew.id}
-                      >
-                        {crew.name}
-                      </option>
-                    )
-                  )}
-                </select>
+                  {saving
+                    ? "Saving..."
+                    : "Save Vehicle"}
+                </button>
               </div>
-
-              {/* Maintenance Warning */}
-
-              {assignment.status ===
-                "Maintenance" && (
-                <div
-                  className="
-                    mt-4
-                    flex
-                    items-center
-                    gap-2
-                    rounded-lg
-                    bg-yellow-50
-                    border
-                    border-yellow-200
-                    px-3
-                    py-2
-                  "
-                >
-                  <CalendarDays
-                    size={16}
-                    className="text-yellow-600"
-                  />
-
-                  <p className="text-xs text-yellow-700">
-                    Truck is scheduled for
-                    maintenance.
-                  </p>
-                </div>
-              )}
-
-              {/* Out of Service Warning */}
-
-              {assignment.status ===
-                "Out of Service" && (
-                <div
-                  className="
-                    mt-4
-                    flex
-                    items-center
-                    gap-2
-                    rounded-lg
-                    bg-red-50
-                    border
-                    border-red-200
-                    px-3
-                    py-2
-                  "
-                >
-                  <Truck
-                    size={16}
-                    className="text-red-600"
-                  />
-
-                  <p className="text-xs text-red-700">
-                    Truck is currently out of
-                    service.
-                  </p>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
