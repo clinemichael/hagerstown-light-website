@@ -88,3 +88,142 @@ export async function getCrews(): Promise<Crew[]> {
     };
   });
 }
+export async function updateCrew(
+  crewId: string,
+  updates: {
+    name: string;
+    leadId: string;
+    memberIds: string[];
+    vehicleIds: string[];
+    status: CrewStatus;
+    assignment: string;
+  }
+): Promise<void> {
+  const { error: crewError } =
+    await supabase
+      .from("crews")
+      .update({
+        name: updates.name,
+        lead_id: updates.leadId || null,
+        status: updates.status,
+        assignment:
+          updates.assignment ||
+          "No current assignment",
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("id", crewId);
+
+  if (crewError) {
+    console.error(
+      "Unable to update crew:",
+      crewError
+    );
+
+    throw new Error(crewError.message);
+  }
+
+  const { error: memberDeleteError } =
+    await supabase
+      .from("crew_members")
+      .delete()
+      .eq("crew_id", crewId);
+
+  if (memberDeleteError) {
+    console.error(
+      "Unable to update crew members:",
+      memberDeleteError
+    );
+
+    throw new Error(
+      memberDeleteError.message
+    );
+  }
+
+  if (updates.memberIds.length > 0) {
+    const { error: memberInsertError } =
+      await supabase
+        .from("crew_members")
+        .insert(
+          updates.memberIds.map(
+            (employeeId) => ({
+              crew_id: crewId,
+              employee_id: employeeId,
+            })
+          )
+        );
+
+    if (memberInsertError) {
+      console.error(
+        "Unable to save crew members:",
+        memberInsertError
+      );
+
+      throw new Error(
+        memberInsertError.message
+      );
+    }
+  }
+
+  const { error: vehicleDeleteError } =
+    await supabase
+      .from("crew_vehicles")
+      .delete()
+      .eq("crew_id", crewId);
+
+  if (vehicleDeleteError) {
+    console.error(
+      "Unable to update crew vehicles:",
+      vehicleDeleteError
+    );
+
+    throw new Error(
+      vehicleDeleteError.message
+    );
+  }
+
+  if (updates.vehicleIds.length > 0) {
+    const { error: vehicleInsertError } =
+      await supabase
+        .from("crew_vehicles")
+        .insert(
+          updates.vehicleIds.map(
+            (vehicleId) => ({
+              crew_id: crewId,
+              vehicle_id: vehicleId,
+            })
+          )
+        );
+
+    if (vehicleInsertError) {
+      console.error(
+        "Unable to save crew vehicles:",
+        vehicleInsertError
+      );
+
+      throw new Error(
+        vehicleInsertError.message
+      );
+    }
+  }
+}
+export async function deactivateCrew(
+  crewId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("crews")
+    .update({
+      status: "Unavailable",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", crewId);
+
+  if (error) {
+    console.error(
+      "Unable to deactivate crew:",
+      error
+    );
+
+    throw new Error(error.message);
+  }
+}

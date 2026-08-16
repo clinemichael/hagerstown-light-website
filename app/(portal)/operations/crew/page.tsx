@@ -26,17 +26,10 @@ import {
 } from "@/data/vehicles";
 
 export default function CrewPage() {
-  const [crews, setCrews] =
-    useState<Crew[]>([]);
-
-  const [employees, setEmployees] =
-    useState<Employee[]>([]);
-
-  const [vehicles, setVehicles] =
-    useState<Vehicle[]>([]);
-
-  const [loading, setLoading] =
-    useState(true);
+  const [crews, setCrews] = useState<Crew[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadCrewData = async () => {
@@ -113,8 +106,8 @@ export default function CrewPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[300px]">
-        <p className="text-gray-500">
+      <div className="rounded-xl border bg-white p-6">
+        <p className="text-gray-600">
           Loading crews...
         </p>
       </div>
@@ -166,10 +159,14 @@ export default function CrewPage() {
           "
         >
           {crews.map((crew) => {
-            const memberIds = [
-              crew.leadId,
-              ...crew.memberIds,
-            ];
+            /*
+             * crew_members is the authoritative list
+             * of crew members.
+             *
+             * The lead is already included in this list,
+             * so we do not add crew.leadId again.
+             */
+            const memberIds = crew.memberIds;
 
             return (
               <div
@@ -220,6 +217,8 @@ export default function CrewPage() {
                     </div>
                   </div>
 
+                  {/* Status */}
+
                   <span
                     className={`
                       text-xs
@@ -264,33 +263,39 @@ export default function CrewPage() {
                   </div>
 
                   <div className="space-y-2">
-                    {memberIds.map(
-                      (employeeId) => (
-                        <div
-                          key={employeeId}
-                          className="
-                            flex
-                            items-center
-                            justify-between
-                            rounded-lg
-                            bg-gray-50
-                            px-3
-                            py-2
-                          "
-                        >
-                          <span className="text-sm">
-                            {getEmployeeName(
-                              employeeId
-                            )}
-                          </span>
-
-                          {employeeId ===
-                            crew.leadId && (
-                            <span className="text-xs font-semibold text-brand-blue">
-                              Lead
+                    {memberIds.length === 0 ? (
+                      <p className="text-sm text-gray-400">
+                        No crew members assigned
+                      </p>
+                    ) : (
+                      memberIds.map(
+                        (employeeId) => (
+                          <div
+                            key={employeeId}
+                            className="
+                              flex
+                              items-center
+                              justify-between
+                              rounded-lg
+                              bg-gray-50
+                              px-3
+                              py-2
+                            "
+                          >
+                            <span className="text-sm">
+                              {getEmployeeName(
+                                employeeId
+                              )}
                             </span>
-                          )}
-                        </div>
+
+                            {employeeId ===
+                              crew.leadId && (
+                              <span className="text-xs font-semibold text-brand-blue">
+                                Lead
+                              </span>
+                            )}
+                          </div>
+                        )
                       )
                     )}
                   </div>
@@ -349,7 +354,17 @@ export default function CrewPage() {
 
                 {/* Summary */}
 
-                <div className="mt-5 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3">
+                <div
+                  className="
+                    mt-5
+                    pt-4
+                    border-t
+                    border-gray-100
+                    grid
+                    grid-cols-2
+                    gap-3
+                  "
+                >
                   <div className="flex items-center gap-2">
                     <Users
                       size={16}
