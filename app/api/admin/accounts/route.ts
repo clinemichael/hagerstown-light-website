@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 const allowedRoles = [
   "Employee",
   "Supervisor",
   "Administrator",
 ];
+
+/*
+ * ========================================
+ * VERIFY ADMINISTRATOR
+ * ========================================
+ */
 
 async function getAdminUser(request: Request) {
   const authorization =
@@ -16,7 +22,9 @@ async function getAdminUser(request: Request) {
   if (!authorization?.startsWith("Bearer ")) {
     return {
       error: NextResponse.json(
-        { error: "Unauthorized." },
+        {
+          error: "Unauthorized.",
+        },
         { status: 401 }
       ),
     };
@@ -26,8 +34,10 @@ async function getAdminUser(request: Request) {
     authorization.replace("Bearer ", "");
 
   /*
-   * Read the Supabase configuration when
-   * the API request is actually made.
+   * Get public Supabase configuration.
+   *
+   * These are safe to use for verifying
+   * the user's access token.
    */
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -40,7 +50,7 @@ async function getAdminUser(request: Request) {
     !supabasePublishableKey
   ) {
     console.error(
-      "Supabase environment variables are missing."
+      "Supabase public environment variables are missing."
     );
 
     return {
@@ -55,8 +65,8 @@ async function getAdminUser(request: Request) {
   }
 
   /*
-   * Create a Supabase client using the
-   * authenticated user's access token.
+   * Create a client using the user's
+   * access token.
    */
   const supabaseUser = createClient(
     supabaseUrl,
@@ -76,7 +86,7 @@ async function getAdminUser(request: Request) {
   );
 
   /*
-   * Verify the access token.
+   * Verify the authenticated user.
    */
   const {
     data: { user },
@@ -86,24 +96,51 @@ async function getAdminUser(request: Request) {
   if (userError || !user) {
     return {
       error: NextResponse.json(
-        { error: "Unauthorized." },
+        {
+          error: "Unauthorized.",
+        },
         { status: 401 }
       ),
     };
   }
 
   /*
-   * Load the portal profile using the
-   * server-side admin client.
+   * Create the server-side admin client.
+   */
+  let supabaseAdmin;
+
+  try {
+    supabaseAdmin =
+      getSupabaseAdmin();
+  } catch (error) {
+    console.error(
+      "Unable to initialize Supabase admin client:",
+      error
+    );
+
+    return {
+      error: NextResponse.json(
+        {
+          error:
+            "Server database configuration is missing.",
+        },
+        { status: 500 }
+      ),
+    };
+  }
+
+  /*
+   * Load the user's portal profile.
    */
   const {
     data: profile,
     error: profileError,
-  } = await supabaseAdmin
-    .from("profiles")
-    .select("role, active")
-    .eq("id", user.id)
-    .single();
+  } =
+    await supabaseAdmin
+      .from("profiles")
+      .select("role, active")
+      .eq("id", user.id)
+      .single();
 
   if (profileError || !profile) {
     return {
@@ -118,7 +155,8 @@ async function getAdminUser(request: Request) {
   }
 
   /*
-   * Disabled accounts cannot use the API.
+   * Disabled accounts cannot use
+   * the portal account API.
    */
   if (!profile.active) {
     return {
@@ -136,7 +174,9 @@ async function getAdminUser(request: Request) {
    * Portal account management is
    * Administrator-only.
    */
-  if (profile.role !== "Administrator") {
+  if (
+    profile.role !== "Administrator"
+  ) {
     return {
       error: NextResponse.json(
         {
@@ -148,7 +188,10 @@ async function getAdminUser(request: Request) {
     };
   }
 
-  return { user };
+  return {
+    user,
+    supabaseAdmin,
+  };
 }
 
 /*
@@ -157,7 +200,9 @@ async function getAdminUser(request: Request) {
  * ========================================
  */
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request
+) {
   try {
     const auth =
       await getAdminUser(request);
@@ -166,7 +211,12 @@ export async function POST(request: Request) {
       return auth.error;
     }
 
-    const body = await request.json();
+    const {
+      supabaseAdmin,
+    } = auth;
+
+    const body =
+      await request.json();
 
     const {
       full_name,
@@ -196,7 +246,9 @@ export async function POST(request: Request) {
     /*
      * Validate role.
      */
-    if (!allowedRoles.includes(role)) {
+    if (
+      !allowedRoles.includes(role)
+    ) {
       return NextResponse.json(
         {
           error:
@@ -253,14 +305,16 @@ export async function POST(request: Request) {
      */
     const {
       error: profileError,
-    } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: authData.user.id,
-        full_name: full_name.trim(),
-        role,
-        active: true,
-      });
+    } =
+      await supabaseAdmin
+        .from("profiles")
+        .insert({
+          id: authData.user.id,
+          full_name:
+            full_name.trim(),
+          role,
+          active: true,
+        });
 
     /*
      * Roll back the Auth user if
@@ -280,9 +334,13 @@ export async function POST(request: Request) {
       );
     }
 
+    /*
+     * Return the newly-created account.
+     */
     return NextResponse.json(
       {
         success: true,
+
         account: {
           id: authData.user.id,
           full_name:
@@ -313,11 +371,21 @@ export async function POST(request: Request) {
 
 /*
  * ========================================
- * UPDATE ACCOUNT / PASSWORD
+ * UPDATE PORTAL ACCOUNT
  * ========================================
+ *
+ * Can update:
+ *
+ * - Full name
+ * - Role
+ * - Active status
+ * - Password
+ *
  */
 
-export async function PATCH(request: Request) {
+export async function PATCH(
+  request: Request
+) {
   try {
     const auth =
       await getAdminUser(request);
@@ -326,7 +394,12 @@ export async function PATCH(request: Request) {
       return auth.error;
     }
 
-    const body = await request.json();
+    const {
+      supabaseAdmin,
+    } = auth;
+
+    const body =
+      await request.json();
 
     const {
       account_id,
@@ -363,10 +436,14 @@ export async function PATCH(request: Request) {
     };
 
     /*
-     * Update name.
+     * Update full name.
      */
-    if (full_name !== undefined) {
-      if (!full_name.trim()) {
+    if (
+      full_name !== undefined
+    ) {
+      if (
+        !full_name.trim()
+      ) {
         return NextResponse.json(
           {
             error:
@@ -384,7 +461,9 @@ export async function PATCH(request: Request) {
      * Update role.
      */
     if (role !== undefined) {
-      if (!allowedRoles.includes(role)) {
+      if (
+        !allowedRoles.includes(role)
+      ) {
         return NextResponse.json(
           {
             error:
@@ -394,7 +473,8 @@ export async function PATCH(request: Request) {
         );
       }
 
-      profileUpdates.role = role;
+      profileUpdates.role =
+        role;
     }
 
     /*
@@ -406,14 +486,15 @@ export async function PATCH(request: Request) {
     }
 
     /*
-     * Update profile.
+     * Update the profile.
      */
     const {
       error: profileError,
-    } = await supabaseAdmin
-      .from("profiles")
-      .update(profileUpdates)
-      .eq("id", account_id);
+    } =
+      await supabaseAdmin
+        .from("profiles")
+        .update(profileUpdates)
+        .eq("id", account_id);
 
     if (profileError) {
       return NextResponse.json(
@@ -428,8 +509,12 @@ export async function PATCH(request: Request) {
     /*
      * Update password if supplied.
      */
-    if (password !== undefined) {
-      if (password.length < 8) {
+    if (
+      password !== undefined
+    ) {
+      if (
+        password.length < 8
+      ) {
         return NextResponse.json(
           {
             error:
