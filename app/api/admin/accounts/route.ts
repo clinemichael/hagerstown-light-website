@@ -3,10 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabasePublishableKey =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
-
 const allowedRoles = [
   "Employee",
   "Supervisor",
@@ -14,7 +10,8 @@ const allowedRoles = [
 ];
 
 async function getAdminUser(request: Request) {
-  const authorization = request.headers.get("authorization");
+  const authorization =
+    request.headers.get("authorization");
 
   if (!authorization?.startsWith("Bearer ")) {
     return {
@@ -25,18 +22,50 @@ async function getAdminUser(request: Request) {
     };
   }
 
-  const accessToken = authorization.replace(
-    "Bearer ",
-    ""
-  );
+  const accessToken =
+    authorization.replace("Bearer ", "");
 
+  /*
+   * Read the Supabase configuration when
+   * the API request is actually made.
+   */
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  const supabasePublishableKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (
+    !supabaseUrl ||
+    !supabasePublishableKey
+  ) {
+    console.error(
+      "Supabase environment variables are missing."
+    );
+
+    return {
+      error: NextResponse.json(
+        {
+          error:
+            "Supabase configuration is missing.",
+        },
+        { status: 500 }
+      ),
+    };
+  }
+
+  /*
+   * Create a Supabase client using the
+   * authenticated user's access token.
+   */
   const supabaseUser = createClient(
     supabaseUrl,
     supabasePublishableKey,
     {
       global: {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization:
+            `Bearer ${accessToken}`,
         },
       },
       auth: {
@@ -46,6 +75,9 @@ async function getAdminUser(request: Request) {
     }
   );
 
+  /*
+   * Verify the access token.
+   */
   const {
     data: { user },
     error: userError,
@@ -60,12 +92,18 @@ async function getAdminUser(request: Request) {
     };
   }
 
-  const { data: profile, error: profileError } =
-    await supabaseAdmin
-      .from("profiles")
-      .select("role, active")
-      .eq("id", user.id)
-      .single();
+  /*
+   * Load the portal profile using the
+   * server-side admin client.
+   */
+  const {
+    data: profile,
+    error: profileError,
+  } = await supabaseAdmin
+    .from("profiles")
+    .select("role, active")
+    .eq("id", user.id)
+    .single();
 
   if (profileError || !profile) {
     return {
@@ -79,17 +117,25 @@ async function getAdminUser(request: Request) {
     };
   }
 
+  /*
+   * Disabled accounts cannot use the API.
+   */
   if (!profile.active) {
     return {
       error: NextResponse.json(
         {
-          error: "Your portal account is disabled.",
+          error:
+            "Your portal account is disabled.",
         },
         { status: 403 }
       ),
     };
   }
 
+  /*
+   * Portal account management is
+   * Administrator-only.
+   */
   if (profile.role !== "Administrator") {
     return {
       error: NextResponse.json(
@@ -106,11 +152,15 @@ async function getAdminUser(request: Request) {
 }
 
 /*
+ * ========================================
  * CREATE PORTAL ACCOUNT
+ * ========================================
  */
+
 export async function POST(request: Request) {
   try {
-    const auth = await getAdminUser(request);
+    const auth =
+      await getAdminUser(request);
 
     if ("error" in auth) {
       return auth.error;
@@ -125,6 +175,9 @@ export async function POST(request: Request) {
       role,
     } = body;
 
+    /*
+     * Validate required fields.
+     */
     if (
       !full_name?.trim() ||
       !email?.trim() ||
@@ -140,15 +193,22 @@ export async function POST(request: Request) {
       );
     }
 
+    /*
+     * Validate role.
+     */
     if (!allowedRoles.includes(role)) {
       return NextResponse.json(
         {
-          error: "Invalid portal role.",
+          error:
+            "Invalid portal role.",
         },
         { status: 400 }
       );
     }
 
+    /*
+     * Validate password.
+     */
     if (password.length < 8) {
       return NextResponse.json(
         {
@@ -160,19 +220,24 @@ export async function POST(request: Request) {
     }
 
     /*
-     * Create the Supabase Auth user.
+     * Create Supabase Auth user.
      */
     const {
       data: authData,
       error: authError,
     } =
-      await supabaseAdmin.auth.admin.createUser({
-        email: email.trim(),
-        password,
-        email_confirm: true,
-      });
+      await supabaseAdmin.auth.admin.createUser(
+        {
+          email: email.trim(),
+          password,
+          email_confirm: true,
+        }
+      );
 
-    if (authError || !authData.user) {
+    if (
+      authError ||
+      !authData.user
+    ) {
       return NextResponse.json(
         {
           error:
@@ -184,20 +249,22 @@ export async function POST(request: Request) {
     }
 
     /*
-     * Create the portal profile.
+     * Create portal profile.
      */
-    const { error: profileError } =
-      await supabaseAdmin
-        .from("profiles")
-        .insert({
-          id: authData.user.id,
-          full_name: full_name.trim(),
-          role,
-          active: true,
-        });
+    const {
+      error: profileError,
+    } = await supabaseAdmin
+      .from("profiles")
+      .insert({
+        id: authData.user.id,
+        full_name: full_name.trim(),
+        role,
+        active: true,
+      });
 
     /*
-     * Roll back the Auth user if the profile fails.
+     * Roll back the Auth user if
+     * profile creation fails.
      */
     if (profileError) {
       await supabaseAdmin.auth.admin.deleteUser(
@@ -206,7 +273,8 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         {
-          error: profileError.message,
+          error:
+            profileError.message,
         },
         { status: 500 }
       );
@@ -217,8 +285,10 @@ export async function POST(request: Request) {
         success: true,
         account: {
           id: authData.user.id,
-          full_name: full_name.trim(),
-          email: email.trim(),
+          full_name:
+            full_name.trim(),
+          email:
+            email.trim(),
           role,
           active: true,
         },
@@ -233,7 +303,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: "An unexpected error occurred.",
+        error:
+          "An unexpected error occurred.",
       },
       { status: 500 }
     );
@@ -241,11 +312,15 @@ export async function POST(request: Request) {
 }
 
 /*
- * UPDATE ACCOUNT / SET TEMPORARY PASSWORD
+ * ========================================
+ * UPDATE ACCOUNT / PASSWORD
+ * ========================================
  */
+
 export async function PATCH(request: Request) {
   try {
-    const auth = await getAdminUser(request);
+    const auth =
+      await getAdminUser(request);
 
     if ("error" in auth) {
       return auth.error;
@@ -261,17 +336,21 @@ export async function PATCH(request: Request) {
       password,
     } = body;
 
+    /*
+     * Account ID is required.
+     */
     if (!account_id) {
       return NextResponse.json(
         {
-          error: "Account ID is required.",
+          error:
+            "Account ID is required.",
         },
         { status: 400 }
       );
     }
 
     /*
-     * Update profile information.
+     * Build profile updates.
      */
     const profileUpdates: {
       full_name?: string;
@@ -279,14 +358,19 @@ export async function PATCH(request: Request) {
       active?: boolean;
       updated_at: string;
     } = {
-      updated_at: new Date().toISOString(),
+      updated_at:
+        new Date().toISOString(),
     };
 
+    /*
+     * Update name.
+     */
     if (full_name !== undefined) {
       if (!full_name.trim()) {
         return NextResponse.json(
           {
-            error: "Name cannot be empty.",
+            error:
+              "Name cannot be empty.",
           },
           { status: 400 }
         );
@@ -296,11 +380,15 @@ export async function PATCH(request: Request) {
         full_name.trim();
     }
 
+    /*
+     * Update role.
+     */
     if (role !== undefined) {
       if (!allowedRoles.includes(role)) {
         return NextResponse.json(
           {
-            error: "Invalid portal role.",
+            error:
+              "Invalid portal role.",
           },
           { status: 400 }
         );
@@ -309,28 +397,36 @@ export async function PATCH(request: Request) {
       profileUpdates.role = role;
     }
 
+    /*
+     * Update active status.
+     */
     if (active !== undefined) {
-      profileUpdates.active = Boolean(active);
+      profileUpdates.active =
+        Boolean(active);
     }
 
-    const { error: profileError } =
-      await supabaseAdmin
-        .from("profiles")
-        .update(profileUpdates)
-        .eq("id", account_id);
+    /*
+     * Update profile.
+     */
+    const {
+      error: profileError,
+    } = await supabaseAdmin
+      .from("profiles")
+      .update(profileUpdates)
+      .eq("id", account_id);
 
     if (profileError) {
       return NextResponse.json(
         {
-          error: profileError.message,
+          error:
+            profileError.message,
         },
         { status: 500 }
       );
     }
 
     /*
-     * If a temporary password was supplied,
-     * update it through Supabase Auth.
+     * Update password if supplied.
      */
     if (password !== undefined) {
       if (password.length < 8) {
@@ -375,7 +471,8 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(
       {
-        error: "An unexpected error occurred.",
+        error:
+          "An unexpected error occurred.",
       },
       { status: 500 }
     );
