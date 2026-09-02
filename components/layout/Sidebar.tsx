@@ -13,6 +13,7 @@ import {
   FileText,
   BarChart3,
   Settings,
+  AlertTriangle,
 } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
@@ -114,6 +115,12 @@ export default function Sidebar() {
       href: "/operations",
       icon: Zap,
       visible: canViewOperations(role),
+    },
+    {
+      name: "Outages",
+      href: "/outages",
+      icon: AlertTriangle,
+      visible: true,
     },
     {
       name: "Safety",
