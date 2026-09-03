@@ -1,59 +1,43 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { getActiveAlerts, type OperationsAlert } from "@/data/alerts";
 import AlertCard from "./AlertCard";
 
-
-const alerts = [
-  {
-    title: "Storm Response Activated",
-    description:
-      "All crews report to operations center.",
-    priority: "critical",
-  },
-
-  {
-    title: "Planned Outage",
-    description:
-      "East feeder scheduled tomorrow at 8:00 AM.",
-    priority: "warning",
-  },
-
-  {
-    title: "Safety Reminder",
-    description:
-      "Monthly tailboard due Friday.",
-    priority: "info",
-  },
-];
-
-
 export default function OperationsAlerts() {
+  const [alerts, setAlerts] = useState<OperationsAlert[] | null>(null);
+
+  useEffect(() => {
+    getActiveAlerts()
+      .then(setAlerts)
+      .catch(() => setAlerts([]));
+  }, []);
+
+  if (alerts && alerts.length === 0) {
+    return null;
+  }
+
   return (
     <section className="mt-10">
-
       <h2 className="text-xl font-bold text-brand-blue mb-4">
         Operations Alerts
       </h2>
 
-
       <div className="space-y-3">
-
-        {alerts.map((alert) => (
-
+        {(alerts ?? []).map((alert) => (
           <AlertCard
-            key={alert.title}
+            key={alert.id}
             title={alert.title}
             description={alert.description}
-            priority={
-              alert.priority as
-              "info" |
-              "warning" |
-              "critical"
-            }
+            priority={alert.priority}
           />
-
         ))}
 
+        {!alerts && (
+          <p className="text-gray-400 text-sm">Loading alerts...</p>
+        )}
       </div>
-
     </section>
   );
 }

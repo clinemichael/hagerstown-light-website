@@ -165,6 +165,21 @@ export default function AdministrationPage() {
             </p>
           </Link>
         )}
+
+        {/* Operations Alerts */}
+        <Link
+          href="/admin/alerts"
+          className="block rounded-xl border bg-white p-6 shadow-sm transition hover:border-brand-blue hover:shadow-md"
+        >
+          <h2 className="text-lg font-semibold text-gray-900">
+            Operations Alerts
+          </h2>
+
+          <p className="mt-2 text-gray-600">
+            Post and manage alerts shown on
+            the operations dashboard.
+          </p>
+        </Link>
       </div>
     </div>
   );

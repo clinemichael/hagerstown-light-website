@@ -1,16 +1,20 @@
+import Link from "next/link";
 import { LucideIcon } from "lucide-react";
 
 type QuickActionCardProps = {
   title: string;
   icon: LucideIcon;
+  href: string;
 };
 
 export default function QuickActionCard({
   title,
   icon: Icon,
+  href,
 }: QuickActionCardProps) {
   return (
-    <div
+    <Link
+      href={href}
       className="
         bg-white
         border
@@ -26,14 +30,9 @@ export default function QuickActionCard({
         cursor-pointer
       "
     >
-      <Icon
-        size={24}
-        className="text-brand-blue"
-      />
+      <Icon size={24} className="text-brand-blue" />
 
-      <span className="font-semibold text-gray-800">
-        {title}
-      </span>
-    </div>
+      <span className="font-semibold text-gray-800">{title}</span>
+    </Link>
   );
 }
